@@ -1,9 +1,10 @@
 import { PropertyCard } from '@/components/property-card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { properties } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Search } from 'lucide-react';
+import { Search, Building, Home as HomeIcon, Trees, Handshake } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -64,6 +65,57 @@ export default function Home() {
             {featuredProperties.map((prop) => (
               <PropertyCard key={prop.id} property={prop} />
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-24 bg-white">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold">Explore by Category</h2>
+            <p className="text-muted-foreground mt-2">Find properties that match your needs.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+            <Link href="/properties?type=House" className="group">
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                        <div className="bg-secondary p-4 rounded-full mb-3">
+                           <HomeIcon className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="font-semibold group-hover:text-primary">Houses</h3>
+                    </CardContent>
+                </Card>
+            </Link>
+             <Link href="/properties?type=Flat" className="group">
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                         <div className="bg-secondary p-4 rounded-full mb-3">
+                           <Building className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="font-semibold group-hover:text-primary">Flats</h3>
+                    </CardContent>
+                </Card>
+            </Link>
+             <Link href="/properties?type=Land" className="group">
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                         <div className="bg-secondary p-4 rounded-full mb-3">
+                           <Trees className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="font-semibold group-hover:text-primary">Land</h3>
+                    </CardContent>
+                </Card>
+            </Link>
+             <Link href="/post-property" className="group">
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                         <div className="bg-secondary p-4 rounded-full mb-3">
+                           <Handshake className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="font-semibold group-hover:text-primary">Sell</h3>
+                    </CardContent>
+                </Card>
+            </Link>
           </div>
         </div>
       </section>
