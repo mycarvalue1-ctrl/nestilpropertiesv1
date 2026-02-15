@@ -293,22 +293,6 @@
         }
       },
       {
-        "path": "roles_admin/{adminId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "A top-level collection used for Database-Backed Access Control (DBAC) to designate administrators. The existence of a document here (where adminId is the user's UID) grants administrator privileges in security rules. Only admins can create/manage these entries, typically via backend functions.",
-          "params": [
-            {
-              "name": "adminId",
-              "description": "The unique ID of a user designated as an administrator."
-            }
-          ]
-        }
-      },
-      {
         "path": "properties/{propertyId}",
         "definition": {
           "entityName": "Property",
