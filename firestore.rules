@@ -62,6 +62,9 @@ service cloud.firestore {
 
     /**
      * Checks if the user is the designated administrator.
+     * The email_verified check is REMOVED for development to allow the admin
+     * to work without needing to verify their email.
+     *
      * IMPORTANT: For production, re-enable `request.auth.token.email_verified == true`.
      */
     function isAdmin() {
