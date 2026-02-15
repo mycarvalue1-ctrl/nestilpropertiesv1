@@ -1,4 +1,4 @@
-# Firebase Studio
+# EasyRent – Buy • Sell • Rent Homes
 
 This is a NextJS starter in Firebase Studio.
 

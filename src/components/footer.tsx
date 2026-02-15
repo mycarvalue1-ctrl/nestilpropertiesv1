@@ -9,7 +9,7 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <Logo />
             <p className="text-muted-foreground text-sm">
-              Your link to the perfect property.
+              Buy • Sell • Rent Homes
             </p>
           </div>
           <div className="md:col-start-3 flex flex-col gap-2">
@@ -26,7 +26,7 @@ export function Footer() {
         </div>
         <div className="mt-8 border-t pt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} PropertyLink. All rights reserved.
+            © {new Date().getFullYear()} EasyRent. All rights reserved.
           </p>
         </div>
       </div>
