@@ -1,4 +1,4 @@
-import type { Property } from './types';
+import type { Property, User } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const getImage = (id: string) => PlaceHolderImages.find(img => img.id === id)?.imageUrl || '';
@@ -174,4 +174,53 @@ export const properties: Property[] = [
     dateAdded: '2024-07-24T18:00:00Z',
     isUrgent: true,
   },
+];
+
+
+export const users: User[] = [
+  {
+    id: 'user-1',
+    name: 'Jane Doe',
+    email: 'jane.doe@example.com',
+    phone: '555-123-4567',
+    dateJoined: '2024-06-15T10:00:00Z',
+    role: 'Owner',
+    listings: 1,
+  },
+  {
+    id: 'user-2',
+    name: 'John Smith',
+    email: 'john.smith@example.com',
+    phone: '555-987-6543',
+    dateJoined: '2024-06-20T11:30:00Z',
+    role: 'Agent',
+    listings: 3,
+  },
+  {
+    id: 'user-3',
+    name: 'Prestige Properties',
+    email: 'contact@prestigeproperties.com',
+    phone: '555-111-2222',
+    dateJoined: '2024-05-10T09:00:00Z',
+    role: 'Builder',
+    listings: 5,
+  },
+  {
+    id: 'user-4',
+    name: 'Corporate Realty',
+    email: 'info@corporaterealty.com',
+    phone: '555-333-4444',
+    dateJoined: '2024-07-01T14:00:00Z',
+    role: 'Agent',
+    listings: 10,
+  },
+  {
+    id: 'user-5',
+    name: 'Emily White',
+    email: 'emily.white@example.com',
+    phone: '555-222-3333',
+    dateJoined: '2024-07-10T18:00:00Z',
+    role: 'Owner',
+    listings: 2,
+  }
 ];

@@ -1,3 +1,5 @@
+'use client';
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { properties } from "@/lib/data";
-import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { properties, users } from "@/lib/data";
+import { CheckCircle, XCircle, Clock, Download, Users } from "lucide-react";
+import type { User } from "@/lib/types";
 
 export default function AdminPage() {
   const pendingProperties = properties.filter(
@@ -24,6 +27,43 @@ export default function AdminPage() {
   );
   
   const allProperties = properties;
+
+  const handleUserCsvDownload = () => {
+    const headers = ['id', 'name', 'email', 'phone', 'dateJoined', 'role', 'listings'];
+    
+    const escapeCsvCell = (cell: string | number) => {
+      const cellStr = String(cell);
+      if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+        return `"${cellStr.replace(/"/g, '""')}"`;
+      }
+      return cellStr;
+    };
+
+    const csvContent = [
+      headers.join(','),
+      ...users.map(user => [
+        user.id,
+        user.name,
+        user.email,
+        user.phone,
+        user.dateJoined,
+        user.role,
+        user.listings
+      ].map(escapeCsvCell).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().split('T')[0];
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `nestil_users_${today}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   return (
     <div className="container py-12">
@@ -33,6 +73,51 @@ export default function AdminPage() {
           Manage property listings and users.
         </p>
       </div>
+
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2"><Users /> User Management</CardTitle>
+            <CardDescription>
+              A total of {users.length} users found.
+            </CardDescription>
+          </div>
+          <Button onClick={handleUserCsvDownload}>
+            <Download className="mr-2 h-4 w-4" />
+            Download User CSV
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead className="hidden sm:table-cell">Email</TableHead>
+                <TableHead className="hidden md:table-cell">Role</TableHead>
+                <TableHead className="hidden md:table-cell">Date Joined</TableHead>
+                <TableHead className="text-right">Listings</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <Badge variant={user.role === 'Agent' || user.role === 'Builder' ? 'secondary' : 'outline'}>
+                      {user.role}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {new Date(user.dateJoined).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">{user.listings}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

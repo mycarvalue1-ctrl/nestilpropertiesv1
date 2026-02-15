@@ -31,3 +31,13 @@ export type Property = {
   isNew?: boolean;
   isUrgent?: boolean;
 };
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  dateJoined: string;
+  role: 'Owner' | 'Agent' | 'Builder';
+  listings: number;
+};
