@@ -98,30 +98,27 @@ service cloud.firestore {
     // ------------------------------------------------------------------------
 
     /**
-     * @description Property listings can be listed by anyone if approved. Individual documents can only be read if they are approved,
-     * unless the requester is the owner or an admin. Writes are restricted to the owner or an admin.
+     * @description Property listings have multiple access levels for reading and writing.
+     * - Admins can read/write anything.
+     * - Owners can read/update/delete their own properties.
+     * - Any signed-in user can create a property.
+     * - Anyone (even unauthenticated) can read properties where `isApproved` is true.
      * @path /properties/{propertyId}
      */
     match /properties/{propertyId} {
-      // --- ADMIN ACCESS ---
-      // Admins have unrestricted read/write access to all properties.
-      allow read, write: if isAdmin();
+      // READ rule: Combines all valid read scenarios.
+      // An admin can read anything.
+      // An owner can read their own document.
+      // Anyone can read a document if it is approved.
+      allow read: if isAdmin() || 
+                     (isSignedIn() && isOwner(resource.data.ownerId)) || 
+                     resource.data.isApproved == true;
 
-      // --- PUBLIC & USER ACCESS (NON-ADMINS) ---
+      // CREATE rule: Any authenticated user can create a property for themselves.
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
       
-      // `get`: Allow reading a single document if it's approved OR if the requester is the owner.
-      allow get: if !isAdmin() && (resource.data.isApproved == true || isOwner(resource.data.ownerId));
-
-      // `list`: Allow ANYONE to perform list queries. This is safe because the `get` rule above
-      // is implicitly enforced on every document in the result set.
-      // Therefore, a client query MUST include `where('isApproved', '==', true)` to succeed for unauthenticated users.
-      allow list: if !isAdmin();
-      
-      // `create`: Allow a signed-in user to create a property for themselves.
-      allow create: if !isAdmin() && isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-
-      // `update, delete`: Allow a non-admin owner to update or delete their own property.
-      allow update, delete: if !isAdmin() && isOwner(resource.data.ownerId);
+      // UPDATE/DELETE rules: Only the owner or an admin can modify/delete.
+      allow update, delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.ownerId));
     }
 
 
