@@ -97,31 +97,34 @@ service cloud.firestore {
     // Application Content Rules
     // ------------------------------------------------------------------------
 
-    /**
-     * @description Property listings have multiple access levels for reading and writing.
-     * - Admins can read/write anything.
-     * - Owners can read/update/delete their own properties.
-     * - Any signed-in user can create a property.
-     * - Anyone (even unauthenticated) can read properties where `isApproved` is true.
-     * @path /properties/{propertyId}
-     */
     match /properties/{propertyId} {
-      // LIST rule (for collection queries):
-      // Allows listing all properties for admins, or listing only approved properties for everyone else.
-      allow list: if isAdmin()
-                  || request.query.where('isApproved', '==', true);
 
-      // GET rule (for single document reads):
-      // Allows getting a document if you are an admin, an owner, or if the document is approved.
+      // ---------------------------
+      // LIST (collection queries)
+      // ---------------------------
+      // Public users may ONLY query approved listings
+      allow list: if isAdmin()
+                  || request.query.where('isApproved', '==', true)
+                  || (isSignedIn() && request.query.where('ownerId', '==', request.auth.uid));
+    
+      // ---------------------------
+      // GET (single document read)
+      // ---------------------------
       allow get: if isAdmin()
                  || (isSignedIn() && isOwner(resource.data.ownerId))
                  || resource.data.isApproved == true;
-      
-      // CREATE rule: Any authenticated user can create a property for themselves.
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      
-      // UPDATE/DELETE rules: Only the owner or an admin can modify/delete.
-      allow update, delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.ownerId));
+    
+      // ---------------------------
+      // CREATE
+      // ---------------------------
+      allow create: if isSignedIn()
+                    && request.resource.data.ownerId == request.auth.uid;
+    
+      // ---------------------------
+      // UPDATE / DELETE
+      // ---------------------------
+      allow update, delete: if isAdmin()
+                            || (isSignedIn() && isOwner(resource.data.ownerId));
     }
 
 
