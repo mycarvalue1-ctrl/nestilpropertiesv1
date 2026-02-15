@@ -1,7 +1,8 @@
-import { PropertyCard } from '@/components/property-card';
+'use client';
+
+import { PropertyCard, PropertyCardSkeleton } from '@/components/property-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { properties } from '@/lib/data';
 import { Building, Home as HomeIcon, Search, Trees } from 'lucide-react';
 import Link from 'next/link';
 import { locationData } from '@/lib/locations';
@@ -13,18 +14,25 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import type { Property } from '@/lib/types';
 
 export default function Home() {
-  const featuredProperties = properties
-    .filter((p) => p.featured && p.listingStatus === 'approved')
-    .slice(0, 3);
-  const recentProperties = properties
-    .filter((p) => p.listingStatus === 'approved')
-    .sort(
-      (a, b) =>
-        new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
-    )
-    .slice(0, 3);
+  const firestore = useFirestore();
+
+  const recentPropertiesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(
+      collection(firestore, 'properties'),
+      where('listingStatus', '==', 'approved'),
+      orderBy('dateAdded', 'desc'),
+      limit(3)
+    );
+  }, [firestore]);
+
+  const { data: recentProperties, isLoading: recentLoading } =
+    useCollection<Property>(recentPropertiesQuery);
 
   const localAreas =
     locationData[0]?.districts
@@ -85,9 +93,17 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {recentProperties.map((prop) => (
-              <PropertyCard key={prop.id} property={prop} />
-            ))}
+            {recentLoading ? (
+              <>
+                <PropertyCardSkeleton />
+                <PropertyCardSkeleton />
+                <PropertyCardSkeleton />
+              </>
+            ) : (
+              recentProperties?.map((prop) => (
+                <PropertyCard key={prop.id} property={prop} />
+              ))
+            )}
           </div>
           <div className="text-center mt-12">
             <Button size="lg" asChild variant="outline">

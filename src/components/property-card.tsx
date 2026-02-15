@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { MapPin, Phone, CheckCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const WhatsappIcon = () => (
   <svg
@@ -88,6 +89,26 @@ export function PropertyCard({ property }: PropertyCardProps) {
               <WhatsappIcon /> WhatsApp
             </Link>
           </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+export function PropertyCardSkeleton() {
+  return (
+    <Card className="w-full overflow-hidden shadow-sm flex flex-col bg-card">
+      <Skeleton className="h-48 w-full" />
+      <div className="p-4 space-y-3 flex-grow flex flex-col">
+        <div className="space-y-2 flex-grow">
+          <Skeleton className="h-6 w-1/3" />
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+        <div className="flex gap-2 border-t pt-3 mt-auto">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
         </div>
       </div>
     </Card>

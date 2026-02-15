@@ -1,9 +1,8 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PropertyCard } from '@/components/property-card';
-import { properties } from '@/lib/data';
+import { PropertyCard, PropertyCardSkeleton } from '@/components/property-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,23 +17,52 @@ import { Button } from '@/components/ui/button';
 import { Filter, Search } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import type { Property } from '@/lib/types';
+
 
 function PropertyList() {
   const searchParams = useSearchParams();
   const status = searchParams.get('status');
   const type = searchParams.get('type');
+  const firestore = useFirestore();
 
-  const filteredProperties = properties.filter(p => {
-    if (p.listingStatus !== 'approved') return false;
-    let match = true;
-    if (status && p.status !== status) {
-      match = false;
-    }
-    if (type && p.type.toLowerCase() !== type.toLowerCase()) {
-      match = false;
-    }
-    return match;
-  });
+  const propertiesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'properties'), where('listingStatus', '==', 'approved'));
+  }, [firestore]);
+
+  const { data: allApprovedProperties, isLoading } = useCollection<Property>(propertiesQuery);
+
+  const filteredProperties = useMemo(() => {
+    if (!allApprovedProperties) return [];
+    return allApprovedProperties.filter(p => {
+      let match = true;
+      if (status && p.status !== status) {
+        match = false;
+      }
+      if (type && p.type && p.type.toLowerCase() !== type.toLowerCase()) {
+        match = false;
+      }
+      return match;
+    });
+  }, [allApprovedProperties, status, type]);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1">
+        <div className="flex justify-between items-center mb-4">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-10 w-[180px]" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          {[...Array(6)].map((_, i) => <PropertyCardSkeleton key={i} />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1">
@@ -58,8 +86,9 @@ function PropertyList() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-20">
-          <p>No properties match your criteria.</p>
+        <div className="text-center py-16 border-dashed border-2 rounded-lg mt-4">
+          <h2 className="text-xl font-semibold">No Properties Found</h2>
+          <p className="text-muted-foreground mt-2">No properties match your current criteria. Try adjusting your filters.</p>
         </div>
       )}
     </div>

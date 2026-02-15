@@ -1,6 +1,5 @@
 'use client';
 
-import { properties } from '@/lib/data';
 import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -8,9 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { BedDouble, Bath, Expand, MapPin, Building, School, Hospital, Phone, BadgeCheck, Sparkles, Flame, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { SimilarProperties } from '@/components/similar-properties';
 import { useState } from 'react';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import type { Property } from '@/lib/types';
+import { doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const WhatsappIcon = () => (
     <svg
@@ -23,16 +25,51 @@ const WhatsappIcon = () => (
     </svg>
   );
 
+function PropertyDetailSkeleton() {
+  return (
+    <div className="container py-10 animate-pulse">
+      <div className="mb-6 space-y-3">
+        <Skeleton className="h-10 w-3/4 rounded-lg" />
+        <Skeleton className="h-6 w-1/2 rounded-lg" />
+        <div className="flex gap-2 pt-2">
+            <Skeleton className="h-7 w-28 rounded-full" />
+            <Skeleton className="h-7 w-28 rounded-full" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+            <Skeleton className="aspect-video w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="h-32 w-full rounded-lg" />
+        </div>
+        <div className="lg:col-span-1 space-y-8">
+            <Skeleton className="h-48 w-full rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PropertyDetailPage() {
   const params = useParams<{ id: string }>();
   const [isContactVisible, setIsContactVisible] = useState(false);
-  const property = properties.find((p) => p.id === params.id);
+  
+  const firestore = useFirestore();
+  const propertyRef = useMemoFirebase(() => {
+    if (!firestore || !params.id) return null;
+    return doc(firestore, 'properties', params.id);
+  }, [firestore, params.id]);
+
+  const { data: property, isLoading } = useDoc<Property>(propertyRef);
+
+  if (isLoading) {
+    return <PropertyDetailSkeleton />;
+  }
 
   if (!property) {
     notFound();
   }
-  
-  const mapImage = PlaceHolderImages.find(img => img.id === 'map-placeholder');
 
   return (
     <div className="bg-background">
@@ -75,7 +112,7 @@ export default function PropertyDetailPage() {
                       <CarouselContent>
                         {property.photos.map((photo, index) => (
                           <CarouselItem key={index}>
-                            <div className="aspect-video">
+                            <div className="aspect-video relative">
                                 <Image src={photo} alt={`${property.title} photo ${index + 1}`} fill className="object-cover" />
                             </div>
                           </CarouselItem>
@@ -136,9 +173,7 @@ export default function PropertyDetailPage() {
                         <CardTitle>Location</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {mapImage && (
-                          <Image src={mapImage.imageUrl} alt="Map location" width={800} height={600} className="w-full rounded-lg" data-ai-hint={mapImage.imageHint}/>
-                        )}
+                        <Image src="https://picsum.photos/seed/map/800/600" alt="Map location" width={800} height={600} className="w-full rounded-lg" data-ai-hint="city map"/>
                     </CardContent>
                 </Card>
             </div>
