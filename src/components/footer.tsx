@@ -12,7 +12,12 @@ export function Footer() {
               Your Nearby Property Marketplace
             </p>
           </div>
-          <div className="md:col-start-3 flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
+            <h4 className="font-semibold">Company</h4>
+            <Link href="/about" className="text-sm text-muted-foreground hover:text-primary">About Us</Link>
+            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">Contact</Link>
+          </div>
+          <div className="flex flex-col gap-2">
             <h4 className="font-semibold">Quick Links</h4>
             <Link href="/properties?status=For+Rent" className="text-sm text-muted-foreground hover:text-primary">Rent</Link>
             <Link href="/properties?status=For+Sale" className="text-sm text-muted-foreground hover:text-primary">Buy</Link>
