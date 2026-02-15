@@ -5,8 +5,8 @@ import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'EasyRent – Buy • Sell • Rent Homes',
-  description: 'Search, Buy, and Sell properties with ease on EasyRent. The best place to find your next home or investment.',
+  title: 'Nestil - Your Nearby Property Marketplace',
+  description: 'Search, Buy, and Sell properties with ease on Nestil. The best place to find your next home or investment.',
 };
 
 export default function RootLayout({

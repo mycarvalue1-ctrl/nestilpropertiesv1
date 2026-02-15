@@ -1,4 +1,4 @@
-# EasyRent – Buy • Sell • Rent Homes
+# Nestil - Your Nearby Property Marketplace
 
 This is a NextJS starter in Firebase Studio.
 
