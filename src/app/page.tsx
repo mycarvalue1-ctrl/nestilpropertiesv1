@@ -1,7 +1,6 @@
 import { PropertyCard } from '@/components/property-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { properties } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Search, Building, Home as HomeIcon, Trees, Handshake } from 'lucide-react';
@@ -29,28 +28,24 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 text-center px-4">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            Your Next Home is Waiting
+            Nestil.in
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-lg text-white/90">
-            Discover a place you'll love to call home, from cozy village houses to comfortable town apartments.
+          <p className="mt-4 max-w-2xl mx-auto text-2xl font-semibold text-white/90">
+            Your Nearby Property Marketplace
           </p>
-          <div className="mt-8 max-w-2xl mx-auto">
-            <div className="flex flex-col sm:flex-row gap-2 bg-white p-2 rounded-lg shadow-2xl">
-              <Input
-                type="text"
-                placeholder="Search by City, Area, or Pincode..."
-                className="flex-grow text-base text-gray-800 border-0 focus-visible:ring-0"
-              />
-              <Button size="lg" className="w-full sm:w-auto">
+          <p className="mt-2 max-w-2xl mx-auto text-lg text-white/80">
+            Buy • Sell • Rent Homes & Plots Around You
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <Button size="lg" asChild>
+                <Link href="/properties" className="flex items-center">
                 <Search className="mr-2 h-5 w-5" />
-                Search
-              </Button>
-            </div>
-             <div className="mt-4 flex justify-center gap-4">
-                <Button variant="secondary" asChild><Link href="/properties?status=For+Sale">Buy</Link></Button>
-                <Button variant="secondary" asChild><Link href="/properties?status=For+Rent">Rent</Link></Button>
-                <Button variant="accent" asChild><Link href="/post-property">Sell Property</Link></Button>
-            </div>
+                Search Properties
+                </Link>
+            </Button>
+            <Button size="lg" variant="accent" asChild>
+                <Link href="/post-property">Post Property Free</Link>
+            </Button>
           </div>
         </div>
       </section>
