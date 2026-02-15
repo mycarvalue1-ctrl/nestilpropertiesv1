@@ -63,7 +63,7 @@ const formSchema = z.object({
   landmark: z.string().optional(),
   pincode: z.string().length(6, "Pincode must be 6 digits."),
   
-  price: z.coerce.number().min(1, "Price must be a positive number."),
+  price: z.coerce.number({ required_error: 'Price is required.' }).min(1, "Price must be a positive number."),
   negotiable: z.enum(['Yes', 'No']),
   maintenance: z.coerce.number().optional(),
   deposit: z.coerce.number().optional(),
@@ -116,10 +116,10 @@ export default function PostPropertyPage() {
       locality: '',
       landmark: '',
       pincode: '',
-      price: '' as any,
+      price: 0,
       negotiable: 'No',
-      maintenance: '' as any,
-      deposit: '' as any,
+      maintenance: 0,
+      deposit: 0,
       availableFrom: undefined,
       preferredTenants: 'Anyone',
       amenities: [],
@@ -142,7 +142,8 @@ export default function PostPropertyPage() {
             form.setValue('state', savedLocation.state);
         }
         if (savedLocation.locality) { // As per data structure, locality is city/town
-          form.setValue('city', savedLocation.locality);
+          form.setValue('city', savedLocation.district);
+          form.setValue('locality', savedLocation.locality);
         }
       }
     } catch (error) {
@@ -421,7 +422,7 @@ export default function PostPropertyPage() {
              <div className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary">
                 <Upload className="mx-auto h-10 w-10 text-muted-foreground mb-2"/>
                 <p className="font-semibold">Click or drag files here to upload</p>
-                <p className="text-sm text-muted-foreground">Upload at least 3 photos. PNG, JPG up to 10MB.</p>
+                <p className="text-sm text-muted-foreground">Upload at least 3 photos. PNG, JPG up to 10 photos.</p>
             </div>
           </FormSection>
 
