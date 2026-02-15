@@ -66,8 +66,8 @@ export default function PostPropertyPage() {
           
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
-              <Label htmlFor="price" className="text-lg">Price ($)</Label>
-              <Input id="price" type="number" placeholder="e.g., 450000" />
+              <Label htmlFor="price" className="text-lg">Price (₹)</Label>
+              <Input id="price" type="number" placeholder="e.g., 4500000" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="area" className="text-lg">Area (sq ft)</Label>
@@ -96,7 +96,7 @@ export default function PostPropertyPage() {
 
            <div className="space-y-2">
             <Label htmlFor="phone" className="text-lg">Contact Phone Number</Label>
-            <Input id="phone" type="tel" placeholder="e.g., 555-123-4567" />
+            <Input id="phone" type="tel" placeholder="e.g., 9876543210" />
           </div>
           
           <Button size="lg" className="w-full" variant="accent">Submit for Approval</Button>

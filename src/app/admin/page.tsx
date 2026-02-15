@@ -105,7 +105,7 @@ export default function AdminPage() {
                {allProperties.map((prop) => (
                   <TableRow key={prop.id}>
                     <TableCell className="font-medium">{prop.title}</TableCell>
-                    <TableCell className="hidden sm:table-cell">${prop.price.toLocaleString()}</TableCell>
+                    <TableCell className="hidden sm:table-cell">₹{prop.price.toLocaleString('en-IN')}</TableCell>
                     <TableCell>
                        <Badge variant={
                            prop.listingStatus === 'approved' ? 'default' : 

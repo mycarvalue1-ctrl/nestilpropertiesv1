@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Filter, Search } from 'lucide-react';
-import type { Property } from '@/lib/types';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -31,7 +30,7 @@ function PropertyList() {
     if (status && p.status !== status) {
       match = false;
     }
-    if (type && p.type !== type) {
+    if (type && p.type.toLowerCase() !== type.toLowerCase()) {
       match = false;
     }
     return match;
@@ -88,8 +87,8 @@ function Filters() {
             <Label>Price Range</Label>
             <Slider defaultValue={[0, 2000000]} max={5000000} step={10000} />
             <div className="flex justify-between text-sm text-muted-foreground">
-                <span>$0</span>
-                <span>$5,000,000+</span>
+                <span>₹0</span>
+                <span>₹50,00,000+</span>
             </div>
           </div>
 

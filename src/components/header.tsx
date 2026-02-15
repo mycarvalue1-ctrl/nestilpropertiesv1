@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 const navLinks = [
   { href: '/properties?status=For+Rent', label: 'Rent' },
   { href: '/properties?status=For+Sale', label: 'Buy' },
+  { href: '/post-property', label: 'Sell' },
 ];
 
 export function Header() {
@@ -52,7 +53,7 @@ export function Header() {
               href={link.href}
               className={cn(
                 "transition-colors hover:text-foreground/80",
-                pathname?.startsWith(link.href.split('?')[0]) ? "text-foreground" : "text-foreground/60"
+                pathname?.startsWith(link.href.split('?')[0]) ? "text-foreground font-semibold" : "text-foreground/60"
               )}
             >
               {link.label}
@@ -66,7 +67,7 @@ export function Header() {
           </Button>
 
           <Button asChild variant="accent" className="hidden sm:inline-flex">
-            <Link href="/post-property">Sell Property</Link>
+            <Link href="/post-property">Post Property</Link>
           </Button>
 
           <DropdownMenu>
@@ -112,7 +113,7 @@ export function Header() {
                 <LocationSelector className="w-full justify-between p-2 hover:bg-accent rounded-md" />
               </div>
               <div className="flex flex-col space-y-4 mt-4">
-                {[...navLinks, { href: '/post-property', label: 'Sell Property' }].map((link) => (
+                {[...navLinks, { href: '/post-property', label: 'Post Property' }].map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

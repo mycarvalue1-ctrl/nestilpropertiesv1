@@ -68,7 +68,7 @@ export function SimilarProperties({ property }: SimilarPropertiesProps) {
               <div key={rec.id} className="p-4 border rounded-lg bg-secondary/50">
                 <div className="flex justify-between items-start">
                   <h4 className="font-bold">{rec.title}</h4>
-                  <p className="font-bold text-primary">${rec.price.toLocaleString()}</p>
+                  <p className="font-bold text-primary">₹{rec.price.toLocaleString('en-IN')}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">{rec.location}</p>
                 <p className="mt-2 text-sm">

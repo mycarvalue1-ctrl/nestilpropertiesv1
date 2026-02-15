@@ -4,10 +4,9 @@ import { properties } from '@/lib/data';
 import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { BedDouble, Bath, Expand, MapPin, Building, School, Hospital, Phone, BadgeCheck, Sparkles, Flame, Eye } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { SimilarProperties } from '@/components/similar-properties';
@@ -46,7 +45,7 @@ export default function PropertyDetailPage() {
             </div>
             <div className="flex flex-wrap gap-2 mt-4">
                 {property.owner.verified && !property.owner.isAgent && (
-                    <Badge variant="default" className="text-base font-medium">
+                    <Badge variant="default" className="text-base font-medium bg-green-100 text-green-800 border-green-200">
                         <BadgeCheck className="mr-1.5 h-5 w-5" /> Verified Owner
                     </Badge>
                 )}
@@ -56,7 +55,7 @@ export default function PropertyDetailPage() {
                     </Badge>
                 )}
                 {property.isNew && (
-                    <Badge variant="outline" className="text-base font-medium">
+                    <Badge variant="outline" className="text-base font-medium border-blue-500 text-blue-600">
                         <Sparkles className="mr-1.5 h-5 w-5" /> New Property
                     </Badge>
                 )}
@@ -150,7 +149,7 @@ export default function PropertyDetailPage() {
                         <div className="flex justify-between items-center">
                             <div>
                                 <p className="text-secondary-foreground text-sm">{property.status}</p>
-                                <p className="text-3xl font-bold text-primary-foreground">${property.price.toLocaleString()}</p>
+                                <p className="text-3xl font-bold text-primary-foreground">₹{property.price.toLocaleString('en-IN')}</p>
                             </div>
                             <Badge variant="default">{property.type}</Badge>
                         </div>
@@ -169,7 +168,7 @@ export default function PropertyDetailPage() {
                           </div>
                            <div>
                             <Expand className="h-6 w-6 mx-auto text-primary" />
-                            <p className="font-bold">{property.areaSqFt.toLocaleString()}</p>
+                            <p className="font-bold">{property.areaSqFt.toLocaleString('en-IN')}</p>
                              <p className="text-xs text-muted-foreground">sqft</p>
                           </div>
                         </div>
@@ -181,10 +180,10 @@ export default function PropertyDetailPage() {
                         <>
                             <CardHeader>
                                 <CardTitle>Interested?</CardTitle>
-                                <CardDescription>Contact the {property.owner.isAgent ? 'agent' : 'owner'} to learn more.</CardDescription>
+                                <p className="text-muted-foreground">Contact the {property.owner.isAgent ? 'agent' : 'owner'} to learn more.</p>
                             </CardHeader>
                             <CardContent>
-                                <Button onClick={() => setIsContactVisible(true)} className="w-full" size="lg" variant="accent">
+                                <Button onClick={() => setIsContactVisible(true)} className="w-full" size="lg">
                                     <Eye className="mr-2 h-5 w-5" />
                                     Show Contact Info
                                 </Button>
