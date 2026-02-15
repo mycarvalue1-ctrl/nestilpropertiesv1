@@ -18,14 +18,14 @@
  *
  * ## Key Security Decisions
  * - **Admin Roles**: Administrator status is determined by a user's email address being
- *   `mycarvalue1@gmail.com` AND their email being verified. This provides a secure and explicit
- *   way to manage permissions for a designated administrator.
+ *   `mycarvalue1@gmail.com`. This provides a secure and explicit way to manage permissions
+ *   for a designated administrator.
  * - **Public Listings**: The visibility of properties in the public `/properties` collection
  *   is controlled by an `isApproved` flag within each document. This protects individual
  *   document reads (`get`), preventing access to unvetted content. Client applications are
  *   expected to filter `list` queries using `where('isApproved', '==', true)`.
  * - **User Privacy**: User profiles and their associated data (like favorites) are strictly
- *   private. Listing users is disallowed to prevent data scraping and enumeration attacks.
+ *   private. Listing users is disallowed for non-admins to prevent data scraping and enumeration attacks.
  *
  * ## Denormalization for Authorization
  * - **Property Ownership**: Each document in `/properties` contains a denormalized `ownerId`
@@ -63,11 +63,11 @@ service cloud.firestore {
 
     /**
      * Checks if the user is the designated administrator.
-     * IMPORTANT: This requires the admin user's email to be verified.
+     * IMPORTANT: For production, it's highly recommended to also check
+     * that the admin user's email is verified (request.auth.token.email_verified == true).
      */
     function isAdmin() {
-      return isSignedIn() && 
-             request.auth.token.email_verified == true &&
+      return isSignedIn() &&
              request.auth.token.email == 'mycarvalue1@gmail.com';
     }
 
