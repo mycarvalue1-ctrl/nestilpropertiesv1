@@ -3,32 +3,51 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // =================================
+    // Helper Functions
+    // =================================
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // User profile rules
+    function isAdmin() {
+      // Direct UID check for the administrator account.
+      return request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
+    }
+
+    function isOwner(ownerId) {
+      // Checks if the requesting user is the owner of the resource.
+      return isSignedIn() && request.auth.uid == ownerId;
+    }
+
+    // =================================
+    // User Profile Rules
+    // =================================
     match /users/{userId} {
-      allow get: if (isSignedIn() && request.auth.uid == userId) || (isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3');
-      allow list: if isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
-      allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.id == userId;
-      allow update: if (isSignedIn() && request.auth.uid == userId) || (isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3');
-      allow delete: if isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
     }
 
-    // Favorite properties rules (user-owned subcollection)
+    // =================================
+    // Favorite Properties (Subcollection)
+    // =================================
     match /users/{userId}/favorite_properties/{favoritePropertyId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      // Only the user themselves can manage their own favorites.
+      allow read, write: if isOwner(userId);
     }
 
-    // Properties collection rules
+    // =================================
+    // Properties Collection Rules
+    // =================================
     match /properties/{propertyId} {
       // LIST: Allows three types of collection queries.
       // 1. Admins can list all properties without filters.
       // 2. Public users can list properties IF they filter for approved ones.
       // 3. Logged-in users can list their own properties by filtering on ownerId.
-      allow list: if (isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3') ||
+      allow list: if isAdmin() ||
                      request.query.where('isApproved', '==', true) ||
                      (isSignedIn() && request.query.where('ownerId', '==', request.auth.uid));
 
@@ -36,27 +55,26 @@ service cloud.firestore {
       // 1. Admins can get any property.
       // 2. Owners can get their own property.
       // 3. Anyone can get a property IF it is approved.
-      allow get: if (isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3') ||
-                    (isSignedIn() && resource.data.ownerId == request.auth.uid) ||
-                    resource.data.isApproved == true;
+      allow get: if isAdmin() || isOwner(resource.data.ownerId) || resource.data.isApproved == true;
 
-      // CREATE: Any signed-in user can create a property.
-      // The ownerId in the new document must match the creator's UID.
+      // CREATE: Any signed-in user can create a property for themselves.
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
 
       // UPDATE / DELETE: Only the owner or an admin can modify/delete.
-      allow update, delete: if (isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3') || (isSignedIn() && resource.data.ownerId == request.auth.uid);
+      allow update, delete: if isAdmin() || isOwner(resource.data.ownerId);
     }
 
-    // Static data collections (admin-write, public-read)
+    // =================================
+    // Static Data Collections
+    // =================================
     match /amenities/{amenityId} {
       allow get, list: if true;
-      allow write: if isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
+      allow write: if isAdmin();
     }
 
     match /nearby_place_types/{nearbyPlaceTypeId} {
       allow get, list: if true;
-      allow write: if isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
+      allow write: if isAdmin();
     }
   }
 }
