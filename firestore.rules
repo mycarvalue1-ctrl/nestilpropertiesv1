@@ -63,11 +63,11 @@ service cloud.firestore {
     }
 
     /**
-     * Checks if the user is an administrator by verifying the existence
-     * of their UID in the dedicated roles_admin collection.
+     * Checks if the user is an administrator by verifying their email address.
+     * This is a simplified approach for a single, designated admin.
      */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && request.auth.token.email == 'mycarvalue1@gmail.com';
     }
 
     // ------------------------------------------------------------------------
@@ -75,19 +75,20 @@ service cloud.firestore {
     // ------------------------------------------------------------------------
 
     /**
-     * @description A user can create, read, and manage their own profile document.
+     * @description A user can create, read, and manage their own profile document. Admins have full access.
      * @path /users/{userId}
      * @allow (create) An authenticated user with UID 'user_abc' creating their own document at /users/user_abc.
+     * @allow (list) An admin listing all user documents for the admin panel.
      * @deny (get) User 'user_xyz' trying to read the document at /users/user_abc.
-     * @deny (list) Any user trying to list all documents in the /users collection.
-     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     * @deny (list) A non-admin user trying to list all documents in the /users collection.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration, except for admins.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && resource != null && request.resource.data.id == resource.data.id;
-      allow delete: if isOwner(userId) && resource != null;
+      allow update: if (isOwner(userId) || isAdmin()) && resource != null && request.resource.data.id == resource.data.id;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
