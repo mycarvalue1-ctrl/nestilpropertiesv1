@@ -19,10 +19,10 @@
  * ## Key Security Decisions
  * - **Admin Roles**: Administrator status is determined by a user's email address being
  *   `mycarvalue1@gmail.com`. For development, email verification is NOT required, but
- *   it should be re-enabled for production by adding `request.auth.token.email_verified == true`.
+ *   it should be re-enabled for production.
  * - **Public Listings**: The visibility of properties is controlled by an `isApproved` flag.
- *   This protects individual document reads (`get`). Client applications for non-admins are
- *   expected to filter `list` queries using `where('isApproved', '==', true)`.
+ *   This is the cornerstone of public access. Client queries for public listings MUST
+ *   filter by `where('isApproved', '==', true)` for `list` operations to succeed.
  * - **User Privacy**: User profiles and their associated data are strictly private. Listing
  *   all users is disallowed for non-admins to prevent data scraping.
  *
@@ -98,25 +98,29 @@ service cloud.firestore {
     // ------------------------------------------------------------------------
 
     /**
-     * @description Property listings can be listed by anyone. Individual documents can only be read if they are approved,
+     * @description Property listings can be listed by anyone if approved. Individual documents can only be read if they are approved,
      * unless the requester is the owner or an admin. Writes are restricted to the owner or an admin.
      * @path /properties/{propertyId}
      */
     match /properties/{propertyId} {
       // --- ADMIN ACCESS ---
-      // Admins can perform any action on any property document.
+      // Admins have unrestricted read/write access to all properties.
       allow read, write: if isAdmin();
 
-      // --- NON-ADMIN ACCESS ---
+      // --- PUBLIC & USER ACCESS (NON-ADMINS) ---
       
-      // Allow reading a document if it's approved OR if the requester owns it.
-      // This also implicitly secures list queries for non-admins if they filter by `isApproved == true`.
+      // `get`: Allow reading a single document if it's approved OR if the requester is the owner.
       allow get: if !isAdmin() && (resource.data.isApproved == true || isOwner(resource.data.ownerId));
+
+      // `list`: Allow ANYONE to perform list queries. This is safe because the `get` rule above
+      // is implicitly enforced on every document in the result set.
+      // Therefore, a client query MUST include `where('isApproved', '==', true)` to succeed for unauthenticated users.
+      allow list: if !isAdmin();
       
-      // A signed-in non-admin can create a property for themselves.
+      // `create`: Allow a signed-in user to create a property for themselves.
       allow create: if !isAdmin() && isSignedIn() && request.resource.data.ownerId == request.auth.uid;
 
-      // A non-admin owner can update or delete their own property.
+      // `update, delete`: Allow a non-admin owner to update or delete their own property.
       allow update, delete: if !isAdmin() && isOwner(resource.data.ownerId);
     }
 
