@@ -66,14 +66,19 @@ export default function AdminPage() {
     }
   }, [currentUser, isUserLoading, router]);
 
-  const propertiesQuery = useMemoFirebase(() => collection(firestore, 'properties'), [firestore]);
+  const isAdmin = currentUser?.email === 'mycarvalue1@gmail.com';
+
+  const propertiesQuery = useMemoFirebase(() => {
+    if (!firestore || !isAdmin) return null;
+    return collection(firestore, 'properties');
+  }, [firestore, isAdmin]);
   const { data: allProperties, isLoading: propertiesLoading } = useCollection<Property>(propertiesQuery);
     
-  const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+  const usersQuery = useMemoFirebase(() => {
+    if (!firestore || !isAdmin) return null;
+    return collection(firestore, 'users');
+  }, [firestore, isAdmin]);
   const { data: users, isLoading: usersLoading } = useCollection<AppUser>(usersQuery);
-
-
-  const isAdmin = currentUser?.email === 'mycarvalue1@gmail.com';
   
   if (isUserLoading || !isAdmin || propertiesLoading || usersLoading) {
     if (isUserLoading || propertiesLoading || usersLoading) {
