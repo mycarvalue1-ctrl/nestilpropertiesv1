@@ -18,8 +18,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { properties, users } from "@/lib/data";
-import { CheckCircle, XCircle, Clock, Download, Users } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Download, Users, Eye } from "lucide-react";
 import type { User } from "@/lib/types";
+import Link from "next/link";
 
 export default function AdminPage() {
   const pendingProperties = properties.filter(
@@ -95,7 +96,8 @@ export default function AdminPage() {
                 <TableHead className="hidden sm:table-cell">Email</TableHead>
                 <TableHead className="hidden md:table-cell">Role</TableHead>
                 <TableHead className="hidden md:table-cell">Date Joined</TableHead>
-                <TableHead className="text-right">Listings</TableHead>
+                <TableHead>Listings</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -111,7 +113,15 @@ export default function AdminPage() {
                   <TableCell className="hidden md:table-cell">
                     {new Date(user.dateJoined).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="text-right">{user.listings}</TableCell>
+                  <TableCell>{user.listings}</TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild variant="ghost" size="icon">
+                        <Link href={`/properties?userId=${user.id}`} title={`View ${user.name}'s listings`}>
+                            <Eye className="h-4 w-4" />
+                            <span className="sr-only">View listings</span>
+                        </Link>
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
