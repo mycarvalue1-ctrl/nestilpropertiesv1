@@ -21,6 +21,7 @@ export const properties: Property[] = [
       getImage('property-1-kitchen'),
     ],
     owner: {
+      id: 'user-1',
       name: 'Jane Doe',
       phone: '555-123-4567',
       isAgent: false,
@@ -57,6 +58,7 @@ export const properties: Property[] = [
       getImage('property-2-bedroom'),
     ],
     owner: {
+      id: 'user-2',
       name: 'John Smith',
       phone: '555-987-6543',
       isAgent: true,
@@ -91,6 +93,7 @@ export const properties: Property[] = [
       getImage('property-3-exterior'),
     ],
     owner: {
+      id: 'user-3',
       name: 'Prestige Properties',
       phone: '555-111-2222',
       isAgent: true,
@@ -123,6 +126,7 @@ export const properties: Property[] = [
       getImage('property-5-exterior'),
     ],
     owner: {
+      id: 'user-4',
       name: 'Corporate Realty',
       phone: '555-333-4444',
       isAgent: true,
@@ -135,7 +139,6 @@ export const properties: Property[] = [
     beds: 0,
     baths: 4,
     furnishing: 'Unfurnished',
-    featured: false,
     listingStatus: 'pending',
     dateAdded: '2024-07-23T11:00:00Z',
     isNew: true,
@@ -155,6 +158,7 @@ export const properties: Property[] = [
         getImage('property-2-exterior'),
     ],
     owner: {
+        id: 'user-5',
         name: 'Emily White',
         phone: '555-222-3333',
         isAgent: false,

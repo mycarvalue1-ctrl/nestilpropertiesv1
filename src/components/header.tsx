@@ -29,6 +29,10 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  
+  // Mock login state
+  const isLoggedIn = true;
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -78,13 +82,27 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild><Link href="/login">Login</Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/login">Sign Up</Link></DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild><Link href="/favorites">Favorites</Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/admin">Admin Panel</Link></DropdownMenuItem>
+              {isLoggedIn ? (
+                <>
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/dashboard/my-properties">My Properties</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/dashboard/profile">Profile</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/favorites">Favorites</Link></DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                   <DropdownMenuItem asChild><Link href="/admin">Admin Panel</Link></DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>Logout</DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild><Link href="/login">Login</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/login">Sign Up</Link></DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 

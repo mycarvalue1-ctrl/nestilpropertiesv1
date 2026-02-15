@@ -11,6 +11,7 @@ export type Property = {
   description: string;
   photos: string[];
   owner: {
+    id: string;
     name: string;
     phone: string;
     isAgent: boolean;
@@ -26,7 +27,7 @@ export type Property = {
   bhk?: string;
   furnishing?: 'Furnished' | 'Semi-furnished' | 'Unfurnished';
   featured: boolean;
-  listingStatus: 'approved' | 'pending' | 'rejected';
+  listingStatus: 'approved' | 'pending' | 'rejected' | 'rented' | 'sold';
   dateAdded: string;
   isNew?: boolean;
   isUrgent?: boolean;
