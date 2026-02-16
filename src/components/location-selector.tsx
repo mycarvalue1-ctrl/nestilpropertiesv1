@@ -40,19 +40,26 @@ export function LocationSelector({ className }: { className?: string }) {
   const [localities, setLocalities] = useState<Locality[]>([]);
 
   const [savedLocation, setSavedLocation] = useState<Location | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
 
   useEffect(() => {
-    try {
-      const locationJson = localStorage.getItem('userLocation');
-      if (locationJson) {
-        setSavedLocation(JSON.parse(locationJson));
+    if (hasMounted) {
+      try {
+        const locationJson = localStorage.getItem('userLocation');
+        if (locationJson) {
+          setSavedLocation(JSON.parse(locationJson));
+        }
+      } catch (error) {
+        console.error("Could not parse location from localStorage", error)
       }
-    } catch (error) {
-      console.error("Could not parse location from localStorage", error)
     }
-  }, []);
+  }, [hasMounted]);
 
   const handleStateChange = (stateName: string) => {
     const state = locationData.find((s) => s.name === stateName);
@@ -126,7 +133,7 @@ export function LocationSelector({ className }: { className?: string }) {
       >
         <MapPin className="h-4 w-4 text-primary" />
         <span className="truncate max-w-[150px]">
-          {savedLocation
+          {hasMounted && savedLocation
             ? `${savedLocation.locality}, ${savedLocation.district}`
             : 'Select Location'}
         </span>
