@@ -306,8 +306,8 @@ export default function PostPropertyPage() {
         // Details from the nested 'details' object
         areaSqFt: values.details.area || values.details.plotArea || 0,
         bhk: values.details.bhk || '',
-        beds: parseInt(values.details.bhk || '0') || 0,
-        baths: parseInt(values.details.bathrooms || '0') || 0,
+        beds: Number(values.details.bhk.charAt(0)) || 0,
+        baths: Number(values.details.bathrooms.charAt(0)) || 0,
         furnishing: values.details.furnishing,
         floor: values.details.floor,
         totalFloors: values.details.totalFloors,
