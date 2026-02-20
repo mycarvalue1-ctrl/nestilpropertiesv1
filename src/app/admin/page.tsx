@@ -26,16 +26,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CheckCircle, XCircle, Clock, Download, Users, Eye, Ban, Trash2, MoreVertical, Filter, Search } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Download, Users, Eye, Ban, Trash2, MoreVertical, Filter, Search, Edit } from "lucide-react";
 import type { User as AppUser, Property } from "@/lib/types";
 import Link from "next/link";
 import { format, fromUnixTime } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { collection, doc, updateDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 function AdminSkeleton() {
   return (
@@ -103,44 +104,6 @@ export default function AdminPage() {
   const usersCount = users?.length || 0;
   const propertiesCount = allProperties?.length || 0;
 
-
-  const handleUserCsvDownload = () => {
-    if (!users) return;
-    const headers = ['id', 'name', 'email', 'phone', 'dateJoined', 'role', 'listings'];
-    
-    const escapeCsvCell = (cell: string | number) => {
-      const cellStr = String(cell);
-      if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
-        return `"${cellStr.replace(/"/g, '""')}"`;
-      }
-      return cellStr;
-    };
-
-    const csvContent = [
-      headers.join(','),
-      ...users.map(user => [
-        user.id,
-        user.name,
-        user.email,
-        user.phone,
-        user.dateJoined,
-        user.role,
-        user.listings
-      ].map(v => escapeCsvCell(v || '')).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-t8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const today = new Date().toISOString().split('T')[0];
-
-    link.setAttribute('href', url);
-    link.setAttribute('download', `nestil_users_${today}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-  
   const handleApprove = async (id: string) => {
     if (!firestore) return;
     try {
@@ -160,13 +123,98 @@ export default function AdminPage() {
       toast({ title: "Error", description: "Could not reject property.", variant: "destructive" });
     }
   };
+
+  const handleBlockUser = async (userId: string, isCurrentlyBanned: boolean) => {
+    if (!firestore) return;
+    try {
+      await updateDoc(doc(firestore, 'users', userId), { isBanned: !isCurrentlyBanned });
+      toast({ title: `User ${isCurrentlyBanned ? 'Unbanned' : 'Banned'}`, description: `The user has been successfully ${isCurrentlyBanned ? 'unbanned' : 'banned'}.` });
+    } catch (error) {
+      toast({ title: "Error", description: "Could not update user status.", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+      if (!firestore) return;
+      if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+      try {
+        await deleteDoc(doc(firestore, 'users', userId));
+        toast({ title: "User Deleted", description: "The user document has been removed." });
+      } catch (error) {
+        toast({ title: "Error", description: "Could not delete user.", variant: "destructive" });
+      }
+  };
+
+  const handleDeleteProperty = async (propertyId: string) => {
+      if (!firestore) return;
+      if (!window.confirm("Are you sure you want to delete this property? This action cannot be undone.")) return;
+      try {
+        await deleteDoc(doc(firestore, 'properties', propertyId));
+        toast({ title: "Property Deleted", description: "The property listing has been removed." });
+      } catch (error) {
+        toast({ title: "Error", description: "Could not delete property.", variant: "destructive" });
+      }
+  };
+  
+  const handleMarkAsSoldRented = async (propertyId: string, currentStatus: string) => {
+      if (!firestore) return;
+      const property = allProperties?.find(p => p.id === propertyId);
+      if (!property) return;
+
+      const isForRent = property.listingFor === 'Rent';
+      const newStatus = currentStatus === 'sold' || currentStatus === 'rented' ? 'approved' : (isForRent ? 'rented' : 'sold');
+      
+      try {
+        await updateDoc(doc(firestore, 'properties', propertyId), { listingStatus: newStatus });
+        toast({ title: "Status Updated", description: `Property marked as ${newStatus}.` });
+      } catch (error) {
+        toast({ title: "Error", description: "Could not update property status.", variant: "destructive" });
+      }
+  };
+
+  const handleUserCsvDownload = () => {
+    if (!users) return;
+    const headers = ['id', 'name', 'email', 'phone', 'dateJoined', 'role', 'listings'];
+    
+    const escapeCsvCell = (cell: string | number | boolean | undefined | null) => {
+      if (cell === null || cell === undefined) return '';
+      const cellStr = String(cell);
+      if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+        return `"${cellStr.replace(/"/g, '""')}"`;
+      }
+      return cellStr;
+    };
+
+    const csvContent = [
+      headers.join(','),
+      ...users.map(user => [
+        user.id,
+        user.name,
+        user.email,
+        user.phone,
+        user.dateJoined,
+        user.role,
+        user.listings
+      ].map(v => escapeCsvCell(v)).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().split('T')[0];
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `nestil_users_${today}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   
   const formatDate = (date: any) => {
     if (!date) return 'N/A';
     if (typeof date === 'string') {
       return format(new Date(date), 'dd/MM/yyyy');
     }
-    // Handle Firestore Timestamp
     if (date.seconds) {
       return format(fromUnixTime(date.seconds), 'dd/MM/yyyy');
     }
@@ -264,7 +312,10 @@ export default function AdminPage() {
             <TableBody>
               {users && users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>{user.name}</div>
+                    {user.isBanned && <Badge variant="destructive" className="mt-1">Banned</Badge>}
+                  </TableCell>
                   <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
                   <TableCell className="hidden md:table-cell">{user.phone}</TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -286,10 +337,16 @@ export default function AdminPage() {
                                 <Eye className="mr-2 h-4 w-4" /> View Listings
                             </Link>
                         </DropdownMenuItem>
-                         <DropdownMenuItem className="text-orange-600 focus:text-orange-600 cursor-pointer">
-                             <Ban className="mr-2 h-4 w-4" /> Block User
+                         <DropdownMenuItem 
+                            className={cn("cursor-pointer", user.isBanned ? "text-green-600 focus:text-green-600" : "text-orange-600 focus:text-orange-600")}
+                            onClick={() => handleBlockUser(user.id, user.isBanned || false)}
+                         >
+                             <Ban className="mr-2 h-4 w-4" /> {user.isBanned ? 'Unban User' : 'Ban User'}
                          </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
+                        <DropdownMenuItem 
+                            className="text-red-600 focus:text-red-600 cursor-pointer"
+                            onClick={() => handleDeleteUser(user.id)}
+                        >
                             <Trash2 className="mr-2 h-4 w-4" /> Delete User
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -431,9 +488,24 @@ export default function AdminPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="cursor-pointer">Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">Mark as Sold/Rented</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">Delete</DropdownMenuItem>
+                            <DropdownMenuItem asChild className="cursor-pointer">
+                                <Link href={`/post-property?edit=${prop.id}`}>
+                                    <Edit className="mr-2 h-4 w-4" />Edit
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => handleMarkAsSoldRented(prop.id, prop.listingStatus)}
+                            >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                {prop.listingStatus === 'sold' || prop.listingStatus === 'rented' ? 'Mark as Available' : 'Mark as Sold/Rented'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                className="text-red-600 focus:text-red-600 cursor-pointer"
+                                onClick={() => handleDeleteProperty(prop.id)}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                     </TableCell>

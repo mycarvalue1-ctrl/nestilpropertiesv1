@@ -1,0 +1,75 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =================================
+    // Helper Functions
+    // =================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      // Direct UID check for the administrator account.
+      return request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
+    }
+
+    function isOwner(ownerId) {
+      // Checks if the requesting user is the owner of the resource.
+      return isSignedIn() && request.auth.uid == ownerId;
+    }
+
+    // =================================
+    // User Profile Rules
+    // =================================
+    match /users/{userId} {
+      // Admin has full CRUD access. Users can read/update their own profile.
+      allow read, update: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow delete: if isAdmin();
+      allow list: if isAdmin();
+    }
+
+    // =================================
+    // Favorite Properties (Subcollection)
+    // =================================
+    match /users/{userId}/favorite_properties/{favoritePropertyId} {
+      // User can manage their own favorites, admin has full access to all favorites.
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // =================================
+    // Properties Collection Rules
+    // =================================
+    match /properties/{propertyId} {
+      // Admin has full access.
+      // For others: LIST is allowed if the query only asks for approved properties.
+      // This forces unauthenticated queries to include `where('isApproved', '==', true)`.
+      allow list: if isAdmin() || (resource.data.isApproved == true);
+
+      // GET is public for any single document if you know the ID.
+      // Visibility is controlled by the client-side queries.
+      allow get: if true;
+
+      // CREATE: Any signed-in user can create a property for themselves.
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+
+      // UPDATE / DELETE: Only the owner or an admin can modify/delete.
+      allow update, delete: if isAdmin() || isOwner(resource.data.ownerId);
+    }
+
+    // =================================
+    // Static Data Collections
+    // =================================
+    match /amenities/{amenityId} {
+      allow get, list: if true;
+      allow write: if isAdmin(); // create, update, delete
+    }
+
+    match /nearby_place_types/{nearbyPlaceTypeId} {
+      allow get, list: if true;
+      allow write: if isAdmin(); // create, update, delete
+    }
+  }
+}

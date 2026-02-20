@@ -64,4 +64,5 @@ export type User = {
   role: 'Owner' | 'Agent' | 'Builder';
   listings: number;
   credits?: number;
+  isBanned?: boolean;
 };
