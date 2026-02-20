@@ -78,7 +78,17 @@ export default function PropertyDetailPage() {
       return;
     }
 
-    if (!firestore) return;
+    if (!firestore || !property?.ownerId) return;
+    
+    // Users can view their own listings for free
+    if (user.uid === property.ownerId) {
+        setIsContactVisible(true);
+        toast({
+            title: "Contact Revealed",
+            description: "You are viewing your own property listing.",
+        });
+        return;
+    }
 
     const userDocRef = doc(firestore, 'users', user.uid);
     try {
@@ -132,6 +142,8 @@ export default function PropertyDetailPage() {
     notFound();
   }
 
+  const propertyPhotos = (property.photos && property.photos.length > 0) ? property.photos : ['https://picsum.photos/seed/property/800/600'];
+
   return (
     <div className="bg-background">
       <div className="container py-10">
@@ -142,12 +154,12 @@ export default function PropertyDetailPage() {
                 <span>{property.address}, {property.city}, {property.pincode}</span>
             </div>
             <div className="flex flex-wrap gap-2 mt-4">
-                {property.owner.verified && !property.owner.isAgent && (
+                {property.owner?.verified && !property.owner?.isAgent && (
                     <Badge variant="default" className="text-base font-medium bg-green-100 text-green-800 border-green-200">
                         <BadgeCheck className="mr-1.5 h-5 w-5" /> Verified Owner
                     </Badge>
                 )}
-                {property.owner.verified && property.owner.isAgent && (
+                {property.owner?.verified && property.owner?.isAgent && (
                     <Badge variant="secondary" className="text-base font-medium">
                         <BadgeCheck className="mr-1.5 h-5 w-5" /> Verified Agent
                     </Badge>
@@ -171,7 +183,7 @@ export default function PropertyDetailPage() {
                   <CardContent className="p-0">
                     <Carousel className="w-full">
                       <CarouselContent>
-                        {property.photos.map((photo, index) => (
+                        {propertyPhotos.map((photo, index) => (
                           <CarouselItem key={index}>
                             <div className="aspect-video relative">
                                 <Image src={photo} alt={`${property.title} photo ${index + 1}`} fill className="object-cover" />
@@ -190,7 +202,7 @@ export default function PropertyDetailPage() {
                         <CardTitle>Description</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">{property.description}</p>
+                        <p className="text-muted-foreground whitespace-pre-wrap">{property.description || 'No description available.'}</p>
                     </CardContent>
                 </Card>
 
@@ -200,7 +212,7 @@ export default function PropertyDetailPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {property.amenities.map((amenity, index) => (
+                            {(property.amenities || []).map((amenity, index) => (
                                 <div key={index} className="flex items-center gap-2">
                                     <div className="bg-secondary p-2 rounded-full">
                                       <Building className="h-4 w-4 text-secondary-foreground" />
@@ -217,7 +229,7 @@ export default function PropertyDetailPage() {
                         <CardTitle>Nearby Places</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {property.nearbyPlaces.map((place, index) => (
+                        {(property.nearbyPlaces || []).map((place, index) => (
                             <div key={index} className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                     {place.name.toLowerCase().includes('school') ? <School className="h-5 w-5 text-primary" /> : <Hospital className="h-5 w-5 text-primary" />}
@@ -226,6 +238,9 @@ export default function PropertyDetailPage() {
                                 <span className="text-muted-foreground">{place.distance}</span>
                             </div>
                         ))}
+                         {(property.nearbyPlaces || []).length === 0 && (
+                            <p className="text-muted-foreground text-sm">No nearby places listed.</p>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -245,7 +260,7 @@ export default function PropertyDetailPage() {
                         <div className="flex justify-between items-center">
                             <div>
                                 <p className="text-secondary-foreground text-sm">{property.status}</p>
-                                <p className="text-3xl font-bold text-primary-foreground">₹{property.price.toLocaleString('en-IN')}</p>
+                                <p className="text-3xl font-bold text-primary-foreground">₹{(property.price || 0).toLocaleString('en-IN')}</p>
                             </div>
                             <Badge variant="default">{property.type}</Badge>
                         </div>
@@ -254,17 +269,17 @@ export default function PropertyDetailPage() {
                        <div className="flex justify-around items-center text-center flex-wrap gap-x-4 gap-y-6">
                           <div>
                             <BedDouble className="h-6 w-6 mx-auto text-primary" />
-                            <p className="font-bold">{property.beds}</p>
+                            <p className="font-bold">{property.beds || 'N/A'}</p>
                             <p className="text-xs text-muted-foreground">Beds</p>
                           </div>
                           <div>
                             <Bath className="h-6 w-6 mx-auto text-primary" />
-                            <p className="font-bold">{property.baths}</p>
+                            <p className="font-bold">{property.baths || 'N/A'}</p>
                              <p className="text-xs text-muted-foreground">Baths</p>
                           </div>
                            <div>
                             <Expand className="h-6 w-6 mx-auto text-primary" />
-                            <p className="font-bold">{property.areaSqFt.toLocaleString('en-IN')}</p>
+                            <p className="font-bold">{(property.areaSqFt || 0).toLocaleString('en-IN')}</p>
                              <p className="text-xs text-muted-foreground">sqft</p>
                           </div>
                            {property.vehicleParking && property.vehicleParking !== 'None' && (
@@ -303,22 +318,22 @@ export default function PropertyDetailPage() {
                     ) : (
                         <>
                             <CardHeader>
-                                <CardTitle>Contact {property.owner.isAgent ? "Agent" : "Owner"}</CardTitle>
-                                <p className="text-xl font-bold text-primary">{property.owner.name}</p>
+                                <CardTitle>Contact {property.owner?.isAgent ? "Agent" : "Owner"}</CardTitle>
+                                <p className="text-xl font-bold text-primary">{property.owner?.name || 'Owner Name'}</p>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="text-center p-4 bg-muted rounded-lg">
                                     <p className="text-sm text-muted-foreground">Phone Number</p>
-                                    <p className="text-2xl font-bold tracking-widest">{property.owner.phone}</p>
+                                    <p className="text-2xl font-bold tracking-widest">{property.owner?.phone || 'N/A'}</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
                                     <Button asChild size="lg">
-                                        <a href={`tel:${property.owner.phone}`}>
+                                        <a href={`tel:${property.owner?.phone}`}>
                                             <Phone className="mr-2 h-5 w-5" /> Call
                                         </a>
                                     </Button>
                                     <Button asChild size="lg" variant="accent">
-                                        <a href={`https://wa.me/${property.owner.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+                                        <a href={`https://wa.me/${(property.owner?.phone || '').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
                                            <WhatsappIcon /> WhatsApp
                                         </a>
                                     </Button>
@@ -335,5 +350,3 @@ export default function PropertyDetailPage() {
     </div>
   );
 }
-
-    

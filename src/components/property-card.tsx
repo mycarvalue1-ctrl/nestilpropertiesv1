@@ -23,17 +23,17 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property }: PropertyCardProps) {
   const keyAmenities = ['Parking', 'Bore Water'];
-  const displayAmenities = property.amenities
+  const displayAmenities = (property.amenities || [])
     .filter((a) => keyAmenities.some(ka => a.toLowerCase().includes(ka.toLowerCase())))
     .slice(0, 2);
-  const ownerType = property.owner.isAgent ? 'Agent' : 'Owner';
+  const ownerType = property.owner?.isAgent ? 'Agent' : 'Owner';
 
   return (
     <Card className="group w-full overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col bg-card">
       <div className="relative">
         <Link href={`/properties/${property.id}`} aria-label={property.title}>
           <Image
-            src={property.photos[0]}
+            src={(property.photos && property.photos[0]) || 'https://picsum.photos/seed/property/600/400'}
             alt={`Photo of ${property.title}`}
             width={600}
             height={400}
@@ -46,7 +46,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         <div className="flex-grow space-y-2">
           <div>
             <p className="text-lg font-bold font-headline text-primary">
-              ₹{new Intl.NumberFormat('en-IN').format(property.price)}
+              ₹{new Intl.NumberFormat('en-IN').format(property.price || 0)}
               {property.status === 'For Rent' && (
                 <span className="text-sm font-normal text-muted-foreground">
                   /month
@@ -54,7 +54,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
               )}
             </p>
             <h3 className="font-bold font-headline text-lg -mt-1">
-              {property.bhk} {property.type}
+              {property.bhk || ''} {property.type || ''}
             </h3>
           </div>
           <p className="flex items-center text-muted-foreground text-sm gap-1 truncate">

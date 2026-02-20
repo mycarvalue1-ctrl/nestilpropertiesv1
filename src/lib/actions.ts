@@ -9,22 +9,22 @@ export async function getSimilarProperties(property: Property) {
       viewedProperty: {
         id: property.id,
         title: property.title,
-        type: property.status.split(' ')[1].toLowerCase() as 'rent' | 'sale' | 'lease',
-        propertyType: property.type.toLowerCase() as 'house' | 'flat' | 'land' | 'commercial',
+        type: (property.status || 'For Sale').split(' ')[1].toLowerCase() as 'rent' | 'sale' | 'lease',
+        propertyType: (property.type || 'House').toLowerCase() as 'house' | 'flat' | 'land' | 'commercial',
         price: property.price,
         areaSqFt: property.areaSqFt,
         address: property.address,
-        description: property.description,
+        description: property.description || '',
         bhk: property.bhk,
         furnishing: property.furnishing?.toLowerCase() as 'furnished' | 'semi-furnished' | 'unfurnished' | undefined,
-        amenities: property.amenities,
+        amenities: property.amenities || [],
       },
       userPreferences: {
         // In a real app, these would come from the logged-in user's profile
         maxPrice: property.price * 1.2,
         minPrice: property.price * 0.8,
         preferredBHKs: property.bhk ? [property.bhk] : [],
-        desiredAmenities: property.amenities.slice(0, 2),
+        desiredAmenities: (property.amenities || []).slice(0, 2),
         preferredLocations: [property.city],
       }
     };
