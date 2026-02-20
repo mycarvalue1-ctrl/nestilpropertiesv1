@@ -29,18 +29,19 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const ownerType = property.owner?.isAgent ? 'Agent' : 'Owner';
 
   return (
-    <Card className="group w-full overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col bg-card">
+    <Card className="group w-full overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col bg-card relative">
+      {/* This link covers the entire card, except for elements with a higher z-index */}
+      <Link href={`/properties/${property.id}`} className="absolute inset-0 z-10" aria-label={property.title} />
+
       <div className="relative">
-        <Link href={`/properties/${property.id}`} aria-label={property.title}>
-          <Image
-            src={(property.photos && property.photos[0]) || 'https://picsum.photos/seed/property/600/400'}
-            alt={`Photo of ${property.title}`}
-            width={600}
-            height={400}
-            className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint="modern house"
-          />
-        </Link>
+        <Image
+          src={(property.photos && property.photos[0]) || 'https://picsum.photos/seed/property/600/400'}
+          alt={`Photo of ${property.title}`}
+          width={600}
+          height={400}
+          className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-105"
+          data-ai-hint="modern house"
+        />
       </div>
       <div className="p-4 space-y-2 flex-grow flex flex-col">
         <div className="flex-grow space-y-2">
@@ -78,7 +79,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
             ))}
           </div>
         </div>
-        <div className="flex gap-2 border-t pt-3 mt-auto">
+        {/* These buttons need a higher z-index to be clickable */}
+        <div className="flex gap-2 border-t pt-3 mt-auto relative z-20">
           <Button asChild variant="outline" className="w-full">
             <Link href={`/properties/${property.id}`}>
               <Phone className="mr-2 h-4 w-4" /> Call
