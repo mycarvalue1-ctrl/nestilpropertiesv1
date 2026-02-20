@@ -261,6 +261,7 @@ export default function PostPropertyPage() {
         });
 
         const uploadPromises = values.photos.map(async (file) => {
+          // Fetch new auth params for each file
           const authRes = await fetch('/api/imagekit/auth');
           if (!authRes.ok) {
               throw new Error(`Failed to authenticate ImageKit for ${file.name}.`);
@@ -307,8 +308,8 @@ export default function PostPropertyPage() {
         // Details from the nested 'details' object
         areaSqFt: values.details.area || values.details.plotArea || 0,
         bhk: values.details.bhk || '',
-        beds: Number(values.details.bhk.charAt(0)) || 0,
-        baths: Number(values.details.bathrooms.charAt(0)) || 0,
+        beds: Number(values.details.bhk.charAt(0) || '0'),
+        baths: Number(values.details.bathrooms.charAt(0) || '0'),
         furnishing: values.details.furnishing,
         floor: values.details.floor,
         totalFloors: values.details.totalFloors,
@@ -681,7 +682,7 @@ export default function PostPropertyPage() {
                       >
                         <Upload className="mx-auto h-10 w-10 text-muted-foreground mb-2"/>
                         <p className="font-semibold">Click or drag files here to upload</p>
-                        <p className="text-sm text-muted-foreground">Upload up to 10 photos. Max 1GB per file.</p>
+                        <p className="text-sm text-muted-foreground">Upload up to 10 photos. Max 25MB per file.</p>
                       </Label>
                       <Input
                         id="photo-upload"
