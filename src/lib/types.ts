@@ -2,7 +2,7 @@ export type Property = {
   id: string;
   title: string;
   status: 'For Sale' | 'For Rent' | 'For Lease';
-  type: 'House' | 'Flat' | 'Land' | 'Commercial';
+  type: string;
   price: number;
   areaSqFt: number;
   address: string;
@@ -33,6 +33,24 @@ export type Property = {
   dateAdded: string;
   isNew?: boolean;
   isUrgent?: boolean;
+
+  // Fields from form that were missing
+  ownerId: string;
+  listingFor: 'Rent' | 'Sale' | 'Lease';
+  negotiable?: boolean;
+  maintenance?: number;
+  deposit?: number;
+  availableFrom?: string | null;
+  preferredTenants?: 'Family' | 'Bachelor' | 'Anyone';
+  floor?: string;
+  totalFloors?: string;
+  facing?: string;
+  age?: string;
+  plotArea?: number;
+  roadWidth?: number;
+  dtcpApproved?: boolean;
+  postedAt: any; // Firestore ServerTimestamp
+  updatedAt: any; // Firestore ServerTimestamp
 };
 
 export type User = {
@@ -45,5 +63,3 @@ export type User = {
   listings: number;
   credits?: number;
 };
-
-    

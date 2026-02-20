@@ -300,7 +300,7 @@ export default function PostPropertyPage() {
         deposit: values.deposit,
 
         // Availability
-        availableFrom: values.availableFrom,
+        availableFrom: values.availableFrom ? values.availableFrom.toISOString() : null,
         preferredTenants: values.preferredTenants,
 
         // Details from the nested 'details' object
