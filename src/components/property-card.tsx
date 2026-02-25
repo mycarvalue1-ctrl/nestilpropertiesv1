@@ -1,10 +1,9 @@
-
 import type { Property } from '@/lib/types';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { MapPin, Phone, CheckCircle, Sparkles, Flame } from 'lucide-react';
+import { MapPin, Phone, CheckCircle, Sparkles, Flame, BedDouble, Bath, Expand } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -25,17 +24,11 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property }: PropertyCardProps) {
-  const keyAmenities = ['Parking', 'Bore Water'];
-  const displayAmenities = (property.amenities || [])
-    .filter((a) => keyAmenities.some(ka => a.toLowerCase().includes(ka.toLowerCase())))
-    .slice(0, 2);
   const ownerType = property.owner?.isAgent ? 'Agent' : 'Owner';
-  
   const isJustListed = property.dateAdded ? differenceInDays(new Date(), parseISO(property.dateAdded)) <= 3 : false;
 
   return (
     <Card className="group w-full overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col bg-card relative">
-      {/* This link covers the entire card, except for elements with a higher z-index */}
       <Link href={`/properties/${property.id}`} className="absolute inset-0 z-10" aria-label={property.title} target="_blank" />
 
       <div className="relative">
@@ -49,7 +42,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         />
         <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-20">
             {property.featured && (
-                <Badge>Featured</Badge>
+                <Badge variant="default" className="bg-accent text-accent-foreground">Featured</Badge>
             )}
              {isJustListed && (
                 <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
@@ -62,57 +55,59 @@ export function PropertyCard({ property }: PropertyCardProps) {
                 </Badge>
             )}
         </div>
+         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent z-20 text-white">
+            <h3 className="font-bold font-headline text-lg truncate">{property.title}</h3>
+            <p className="flex items-center text-sm gap-1 truncate text-white/90">
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span>{property.address}, {property.city}</span>
+            </p>
+          </div>
       </div>
-      <div className="p-4 space-y-2 flex-grow flex flex-col">
-        <div className="flex-grow space-y-2">
-          <div>
-            <p className="text-lg font-bold font-headline text-primary">
+      <CardContent className="p-4 space-y-4 flex-grow flex flex-col">
+        <div className="flex-grow space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="text-xl font-bold font-headline text-primary">
               ₹{new Intl.NumberFormat('en-IN').format(property.price || 0)}
               {property.status === 'For Rent' && (
-                <span className="text-sm font-normal text-muted-foreground">
-                  /month
-                </span>
+                <span className="text-sm font-normal text-muted-foreground"> /month</span>
               )}
             </p>
-            <h3 className="font-bold font-headline text-lg -mt-1">
-              {property.bhk || ''} {property.type || ''}
-            </h3>
+             <Badge variant="secondary" className="capitalize">{property.type}</Badge>
           </div>
-          <p className="flex items-center text-muted-foreground text-sm gap-1 truncate">
-            <MapPin className="h-4 w-4 shrink-0" />
-            <span>
-              {property.address}, {property.city}
-            </span>
-          </p>
-          <div className="flex items-center text-sm text-muted-foreground gap-2.5 pt-1 flex-wrap">
-            <span className="flex items-center gap-1 font-medium text-foreground/80">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              {ownerType}
-            </span>
-            {displayAmenities.map((amenity) => (
-              <span
-                key={amenity}
-                className="flex items-center gap-1 before:content-['•'] before:mr-2"
-              >
-                {amenity}
-              </span>
-            ))}
+          
+          <div className="flex justify-around items-center text-center border-y py-3 text-sm">
+             <div className="flex items-center gap-1.5">
+                <BedDouble className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{property.beds || 'N/A'} <span className="font-normal text-muted-foreground">Beds</span></span>
+             </div>
+              <div className="flex items-center gap-1.5">
+                <Bath className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{property.baths || 'N/A'} <span className="font-normal text-muted-foreground">Baths</span></span>
+             </div>
+              <div className="flex items-center gap-1.5">
+                <Expand className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{property.areaSqFt || 'N/A'} <span className="font-normal text-muted-foreground">sqft</span></span>
+             </div>
+          </div>
+          
+          <div className="text-sm text-muted-foreground">
+             Posted by <span className="font-semibold text-foreground">{property.owner?.name}</span> ({ownerType})
           </div>
         </div>
-        {/* These buttons need a higher z-index to be clickable */}
-        <div className="flex gap-2 border-t pt-3 mt-auto relative z-20">
-          <Button asChild variant="outline" className="w-full">
-            <Link href={`/properties/${property.id}`} target="_blank">
+
+        <div className="flex gap-2 pt-3 mt-auto relative z-20">
+          <Button asChild className="w-full" variant="outline">
+            <a href={`tel:${property.owner?.phone}`} onClick={(e) => e.stopPropagation()}>
               <Phone className="mr-2 h-4 w-4" /> Call
-            </Link>
+            </a>
           </Button>
-          <Button asChild variant="accent" className="w-full">
-            <Link href={`/properties/${property.id}`} target="_blank">
+          <Button asChild className="w-full bg-green-500 hover:bg-green-600 text-white" >
+            <a href={`https://wa.me/${(property.owner?.phone || '').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
               <WhatsappIcon /> WhatsApp
-            </Link>
+            </a>
           </Button>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 }

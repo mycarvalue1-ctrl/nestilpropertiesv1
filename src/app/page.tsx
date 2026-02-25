@@ -18,6 +18,9 @@ import { Input } from '@/components/ui/input';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+
 
 export default function Home() {
   const firestore = useFirestore();
@@ -57,21 +60,31 @@ export default function Home() {
     locationData[0]?.districts
       .flatMap((d) => d.localities.map((l) => ({ ...l, district: d.name })))
       .slice(0, 10) || [];
+      
+  const heroImage = PlaceHolderImages.find(img => img.id === 'hero-background');
 
   return (
     <>
-      <section className="py-20 md:py-24 bg-secondary">
-        <div className="container text-center">
-          <h1 className="text-4xl md:text-5xl font-bold font-headline">
-            Nestil.in
-          </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-xl text-foreground/80">
+      <section className="relative py-20 md:py-32 bg-secondary/20 flex items-center justify-center text-center">
+        {heroImage && (
+          <Image
+            src={heroImage.imageUrl}
+            alt={heroImage.description}
+            fill
+            className="object-cover"
+            priority
+            data-ai-hint={heroImage.imageHint}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
+        <div className="container relative z-10 text-white">
+          <h1 className="text-4xl md:text-6xl font-bold font-headline drop-shadow-md">
             Your Nearby Property Marketplace
+          </h1>
+          <p className="mt-4 max-w-2xl mx-auto text-xl text-white/90 drop-shadow">
+            Buy, Sell, or Rent Homes & Plots Around You with Ease
           </p>
-          <p className="mt-1 max-w-2xl mx-auto text-lg text-foreground/60">
-            Buy • Sell • Rent Homes & Plots Around You
-          </p>
-          <Card className="max-w-4xl mx-auto mt-8 p-4 shadow-lg">
+          <Card className="max-w-4xl mx-auto mt-8 p-4 shadow-lg bg-background/90 backdrop-blur-sm">
             <form className="grid sm:grid-cols-4 items-center gap-4">
               <div className="sm:col-span-2">
                 <Input
@@ -92,7 +105,7 @@ export default function Home() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button size="lg" className="h-12 w-full text-base">
+              <Button size="lg" className="h-12 w-full text-base" variant="accent">
                 <Search className="mr-2 h-5 w-5" />
                 Search
               </Button>
@@ -108,7 +121,7 @@ export default function Home() {
               Latest Listings
             </h2>
             <p className="text-muted-foreground mt-2">
-              Check out the latest listings on Nestil.
+              Check out the latest properties fresh on the market.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -125,14 +138,14 @@ export default function Home() {
             )}
           </div>
           <div className="text-center mt-12">
-            <Button size="lg" asChild variant="outline">
+            <Button size="lg" asChild>
               <Link href="/properties">View All Properties</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-white">
+      <section className="py-16 md:py-24 bg-secondary/50">
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold">
@@ -144,48 +157,48 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             <Link href="/properties?type=House&status=For%20Rent" className="group">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <Card className="overflow-hidden hover:shadow-xl transition-shadow border-none">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center bg-card h-full">
                   <div className="bg-secondary p-4 rounded-full mb-3">
                     <HomeIcon className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-semibold group-hover:text-primary">
+                  <h3 className="font-semibold group-hover:text-accent">
                     Rent House
                   </h3>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/properties?type=House&status=For%20Sale" className="group">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <Card className="overflow-hidden hover:shadow-xl transition-shadow border-none">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center bg-card h-full">
                   <div className="bg-secondary p-4 rounded-full mb-3">
                     <HomeIcon className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-semibold group-hover:text-primary">
+                  <h3 className="font-semibold group-hover:text-accent">
                     Buy House
                   </h3>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/properties?type=Land" className="group">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <Card className="overflow-hidden hover:shadow-xl transition-shadow border-none">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center bg-card h-full">
                   <div className="bg-secondary p-4 rounded-full mb-3">
                     <Trees className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-semibold group-hover:text-primary">
+                  <h3 className="font-semibold group-hover:text-accent">
                     Plots
                   </h3>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/properties?type=Commercial" className="group">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <Card className="overflow-hidden hover:shadow-xl transition-shadow border-none">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center bg-card h-full">
                   <div className="bg-secondary p-4 rounded-full mb-3">
                     <Building className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-semibold group-hover:text-primary">
+                  <h3 className="font-semibold group-hover:text-accent">
                     Commercial
                   </h3>
                 </CardContent>
@@ -195,7 +208,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-secondary">
+      <section className="py-16 md:py-24 bg-background">
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-headline">
@@ -211,7 +224,7 @@ export default function Home() {
                 key={locality.name}
                 href={`/properties?location=${locality.name}`}
               >
-                <Card className="text-center p-4 hover:bg-card hover:shadow-md transition-all h-full flex items-center justify-center">
+                <Card className="text-center p-4 hover:bg-card hover:shadow-md transition-all h-full flex items-center justify-center hover:border-accent">
                   <h3 className="font-semibold">{locality.name}</h3>
                 </Card>
               </Link>
@@ -220,7 +233,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 bg-background">
+      <section className="py-16 bg-secondary/50">
         <div className="container text-center">
           <h2 className="text-3xl font-bold font-headline">
             Have a property to sell or rent?
