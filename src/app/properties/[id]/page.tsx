@@ -107,6 +107,20 @@ export default function PropertyDetailPage() {
 
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
+
+        // Check for active subscription first
+        if (userData.subscriptionEndDate) {
+            const subEndDate = new Date(userData.subscriptionEndDate);
+            if (subEndDate > new Date()) {
+                setIsContactVisible(true);
+                toast({
+                    title: "Contact Revealed",
+                    description: "You have an active unlimited plan.",
+                });
+                return; // User has active subscription, no need to check credits
+            }
+        }
+
         if (userData.credits && userData.credits > 0) {
           // Deduct credit and show info
           await updateDoc(userDocRef, {
@@ -121,8 +135,8 @@ export default function PropertyDetailPage() {
           // No credits
           toast({
             variant: "destructive",
-            title: "Out of Credits",
-            description: "You need to buy more credits to see contact details.",
+            title: "No Credits or Active Subscription",
+            description: "You need to buy a plan to see contact details.",
           });
           router.push('/buy-credits');
         }
@@ -135,11 +149,11 @@ export default function PropertyDetailPage() {
         });
       }
     } catch (error) {
-      console.error("Error checking credits: ", error);
+      console.error("Error checking credits/subscription: ", error);
       toast({
         variant: "destructive",
         title: "An Error Occurred",
-        description: "Could not verify your credit balance.",
+        description: "Could not verify your plan.",
       });
     }
   };
@@ -335,14 +349,13 @@ export default function PropertyDetailPage() {
                         <>
                             <CardHeader>
                                 <CardTitle>Interested?</CardTitle>
-                                <p className="text-muted-foreground">Reveal owner details for 1 credit.</p>
+                                <p className="text-muted-foreground">Reveal owner details by purchasing a plan.</p>
                             </CardHeader>
                             <CardContent>
                                 <Button onClick={handleShowContact} className="w-full" size="lg">
-                                    <Coins className="mr-2 h-5 w-5" />
-                                    Spend 1 Credit to View
+                                    <Eye className="mr-2 h-5 w-5" />
+                                    Show Contact Info
                                 </Button>
-                                <p className="text-xs text-muted-foreground mt-2">You will be charged 1 credit.</p>
                             </CardContent>
                         </>
                     ) : (
@@ -378,5 +391,3 @@ export default function PropertyDetailPage() {
     </div>
   );
 }
-
-    
