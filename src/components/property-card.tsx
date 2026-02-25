@@ -48,7 +48,7 @@ export function PropertyCard({ property, isFavorited, onToggleFavorite }: Proper
 
   return (
     <Card className="group w-full overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col bg-card relative">
-      <Link href={`/properties/${property.id}`} className="absolute inset-0 z-10" aria-label={property.title} target="_blank" />
+      <Link href={`/properties/${property.id}`} className="absolute inset-0 z-10" aria-label={property.title} />
 
       <div className="relative">
         <Image
@@ -126,7 +126,7 @@ export function PropertyCard({ property, isFavorited, onToggleFavorite }: Proper
 
         <div className="pt-3 mt-auto relative z-20">
           <Button asChild className="w-full">
-            <Link href={`/properties/${property.id}`} target="_blank">
+            <Link href={`/properties/${property.id}`}>
               View Details
             </Link>
           </Button>
