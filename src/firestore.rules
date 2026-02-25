@@ -11,8 +11,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Direct UID check for the administrator account.
-      return request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
+      // Safely check for admin UID, ensuring user is signed in first.
+      return isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
     }
 
     function isOwner(ownerId) {
