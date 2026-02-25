@@ -191,23 +191,36 @@ export default function PostPropertyPage() {
   };
 
   useEffect(() => {
-    try {
-      const locationJson = localStorage.getItem('userLocation');
-      if (locationJson) {
-        const savedLocation = JSON.parse(locationJson);
-        if (savedLocation.state) {
+    const updateLocationFields = () => {
+      try {
+        const locationJson = localStorage.getItem('userLocation');
+        if (locationJson) {
+          const savedLocation = JSON.parse(locationJson);
+          if (savedLocation.state) {
             form.setValue('state', savedLocation.state);
+          }
+          if (savedLocation.district) {
+            form.setValue('city', savedLocation.district);
+          }
+          if (savedLocation.locality) {
+            form.setValue('locality', savedLocation.locality);
+          }
         }
-        if (savedLocation.district) {
-          form.setValue('city', savedLocation.district);
-        }
-        if (savedLocation.locality) {
-          form.setValue('locality', savedLocation.locality);
-        }
+      } catch (error) {
+        console.error("Could not parse location from localStorage", error);
       }
-    } catch (error) {
-      console.error("Could not parse location from localStorage", error);
-    }
+    };
+
+    // Run once on mount to get initial location
+    updateLocationFields();
+
+    // Listen for custom event when location is changed elsewhere
+    window.addEventListener('location-changed', updateLocationFields);
+
+    // Cleanup: remove event listener when component unmounts
+    return () => {
+      window.removeEventListener('location-changed', updateLocationFields);
+    };
   }, [form]);
 
   const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {

@@ -91,6 +91,7 @@ export function LocationSelector({ className }: { className?: string }) {
         locality: selectedLocality.name,
       };
       localStorage.setItem('userLocation', JSON.stringify(newLocation));
+      window.dispatchEvent(new CustomEvent('location-changed')); // Dispatch custom event
       setSavedLocation(newLocation);
       setIsModalOpen(false);
       resetSelection();
