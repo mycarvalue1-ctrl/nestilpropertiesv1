@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { PropertyCard, PropertyCardSkeleton } from '@/components/property-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +15,13 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
@@ -24,6 +31,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function Home() {
   const firestore = useFirestore();
+  const [sortBy, setSortBy] = useState('relevance');
 
   // Fetch all approved properties
   const approvedPropertiesQuery = useMemoFirebase(() => {
@@ -46,14 +54,31 @@ export default function Home() {
       return { recentProperties: [], isLoading: false };
     }
 
-    // Sort by dateAdded in descending order
-    const sorted = [...approvedProperties].sort((a, b) => 
-      new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
-    );
+    let sorted = [...approvedProperties];
+
+    switch (sortBy) {
+      case 'price-asc':
+        sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case 'price-desc':
+        sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+      case 'recent':
+        sorted.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime());
+        break;
+      case 'relevance':
+      default:
+        sorted.sort((a, b) => {
+          if (a.featured && !b.featured) return -1;
+          if (!a.featured && b.featured) return 1;
+          return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
+        });
+        break;
+    }
     
-    // Get the first 3
-    return { recentProperties: sorted.slice(0, 3), isLoading: false };
-  }, [approvedProperties, propertiesLoading]);
+    // Get the first 6
+    return { recentProperties: sorted.slice(0, 6), isLoading: false };
+  }, [approvedProperties, propertiesLoading, sortBy]);
 
 
   const localAreas =
@@ -114,17 +139,35 @@ export default function Home() {
 
       <section className="py-16 md:py-24 bg-background">
         <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Latest Listings
-            </h2>
-            <p className="text-muted-foreground mt-2">
-              Check out the latest properties fresh on the market.
-            </p>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
+            <div className="text-center md:text-left">
+              <h2 className="text-3xl md:text-4xl font-bold">
+                Latest Listings
+              </h2>
+              <p className="text-muted-foreground mt-2">
+                Check out the latest properties fresh on the market.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="relevance">Relevance</SelectItem>
+                  <SelectItem value="recent">Fresh Properties</SelectItem>
+                  <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                  <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {isLoading ? (
               <>
+                <PropertyCardSkeleton />
+                <PropertyCardSkeleton />
+                <PropertyCardSkeleton />
                 <PropertyCardSkeleton />
                 <PropertyCardSkeleton />
                 <PropertyCardSkeleton />
