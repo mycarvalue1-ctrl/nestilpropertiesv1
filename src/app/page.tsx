@@ -25,8 +25,6 @@ import {
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 
 export default function Home() {
@@ -86,43 +84,31 @@ export default function Home() {
       .flatMap((d) => d.localities.map((l) => ({ ...l, district: d.name })))
       .slice(0, 10) || [];
       
-  const heroImage = PlaceHolderImages.find(img => img.id === 'hero-background');
 
   return (
     <>
-      <section className="relative pt-20 pb-24 md:pt-32 md:pb-36 bg-secondary/20 flex items-center justify-center text-center">
-        {heroImage && (
-          <Image
-            src={heroImage.imageUrl}
-            alt={heroImage.description}
-            fill
-            className="object-cover"
-            priority
-            data-ai-hint={heroImage.imageHint}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30" />
-        <div className="container relative z-10 text-white">
-          <h1 className="text-4xl md:text-6xl font-bold font-headline drop-shadow-lg">
+      <section className="py-20 md:py-32 bg-secondary/50 text-center">
+        <div className="container">
+          <h1 className="text-4xl md:text-6xl font-bold font-headline text-primary">
             Find Your Perfect Place
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-xl text-white/90 drop-shadow">
+          <p className="mt-4 max-w-2xl mx-auto text-xl text-foreground/80">
             Discover homes, plots, and commercial properties tailored for you.
           </p>
 
           <div className="max-w-3xl mx-auto mt-8">
             <Tabs defaultValue="rent" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex mx-auto bg-black/30 backdrop-blur-sm border border-white/20 text-white">
-                <TabsTrigger value="rent" className="data-[state=active]:bg-white/90 data-[state=active]:text-primary">For Rent</TabsTrigger>
-                <TabsTrigger value="buy" className="data-[state=active]:bg-white/90 data-[state=active]:text-primary">For Sale</TabsTrigger>
-                <TabsTrigger value="plots" className="data-[state=active]:bg-white/90 data-[state=active]:text-primary">Plots</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex mx-auto">
+                <TabsTrigger value="rent">For Rent</TabsTrigger>
+                <TabsTrigger value="buy">For Sale</TabsTrigger>
+                <TabsTrigger value="plots">Plots</TabsTrigger>
               </TabsList>
-              <div className="mt-4 p-4 md:p-6 rounded-lg bg-black/30 backdrop-blur-sm border border-white/20 shadow-2xl">
+              <div className="mt-4 p-4 md:p-6 rounded-lg bg-background border shadow-lg">
                 <form className="grid sm:grid-cols-4 items-center gap-4">
                   <div className="sm:col-span-3">
                     <Input
                       placeholder="Search by city, locality, or landmark..."
-                      className="h-12 text-base text-foreground bg-white"
+                      className="h-12 text-base"
                     />
                   </div>
                   <Button size="lg" className="h-12 w-full text-base" variant="accent">
