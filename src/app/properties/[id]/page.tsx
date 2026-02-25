@@ -60,6 +60,22 @@ export default function PropertyDetailPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
+  const propertyRef = useMemoFirebase(() => {
+    if (!firestore || !params.id) return null;
+    return doc(firestore, 'properties', params.id);
+  }, [firestore, params.id]);
+
+  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+
+  const mapUrl = useMemo(() => {
+    if (!property) return '';
+    if (property.googleMapsLink) {
+      return property.googleMapsLink;
+    }
+    const mapQuery = encodeURIComponent(`${property.address}, ${property.city}, ${property.pincode}`);
+    return `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+  }, [property]);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       toast({
@@ -70,13 +86,6 @@ export default function PropertyDetailPage() {
       router.push('/user-login');
     }
   }, [user, isUserLoading, router, toast]);
-
-  const propertyRef = useMemoFirebase(() => {
-    if (!firestore || !params.id) return null;
-    return doc(firestore, 'properties', params.id);
-  }, [firestore, params.id]);
-
-  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
 
   const handleShowContact = async () => {
     if (!user) {
@@ -172,14 +181,6 @@ export default function PropertyDetailPage() {
   }
 
   const propertyPhotos = (property.photos && property.photos.length > 0) ? property.photos : ['https://picsum.photos/seed/property/800/600'];
-
-  const mapUrl = useMemo(() => {
-    if (property.googleMapsLink) {
-      return property.googleMapsLink;
-    }
-    const mapQuery = encodeURIComponent(`${property.address}, ${property.city}, ${property.pincode}`);
-    return `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
-  }, [property]);
 
   return (
     <div className="bg-background">
