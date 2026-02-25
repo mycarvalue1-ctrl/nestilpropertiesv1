@@ -53,6 +53,7 @@ export type Property = {
   dtcpApproved?: boolean;
   postedAt: any; // Firestore ServerTimestamp
   updatedAt: any; // Firestore ServerTimestamp
+  googleMapsLink?: string;
 };
 
 export type User = {
@@ -66,3 +67,5 @@ export type User = {
   credits?: number;
   isBanned?: boolean;
 };
+
+    

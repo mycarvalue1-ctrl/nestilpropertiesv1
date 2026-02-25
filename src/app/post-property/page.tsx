@@ -68,6 +68,7 @@ const formSchema = z.object({
   locality: z.string({ required_error: "Area/Locality is required." }).min(1, "Area/Locality is required."),
   landmark: z.string().optional(),
   pincode: z.string().length(6, "Pincode must be 6 digits."),
+  googleMapsLink: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   
   price: z.coerce.number({ required_error: 'Price is required.' }).min(1, "Price must be a positive number."),
   negotiable: z.enum(['Yes', 'No']),
@@ -142,6 +143,7 @@ export default function PostPropertyPage() {
       locality: '',
       landmark: '',
       pincode: '',
+      googleMapsLink: '',
       price: 0,
       negotiable: 'No',
       maintenance: 0,
@@ -173,22 +175,6 @@ export default function PostPropertyPage() {
   });
 
   const propertyType = useWatch({ control: form.control, name: 'propertyType' });
-  const city = useWatch({ control: form.control, name: 'city' });
-  const locality = useWatch({ control: form.control, name: 'locality' });
-
-  const handleOpenMap = () => {
-    const query = [locality, city].filter(Boolean).join(', ');
-    if (!query) {
-      toast({
-        variant: 'destructive',
-        title: 'Location Needed',
-        description: 'Please enter a city and locality before opening the map.',
-      });
-      return;
-    }
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-    window.open(url, '_blank');
-  };
 
   useEffect(() => {
     const updateLocationFields = () => {
@@ -323,6 +309,7 @@ export default function PostPropertyPage() {
         address: values.locality, // Using locality as main address part
         pincode: values.pincode,
         landmark: values.landmark,
+        googleMapsLink: values.googleMapsLink,
 
         // Price
         price: values.price,
@@ -499,14 +486,16 @@ export default function PostPropertyPage() {
                     <FormMessage />
                 </FormItem>
             )} />
-            <div>
-                <Label>Pin Location on Map</Label>
-                 <div className="mt-2 p-4 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center">
-                    <MapPin className="h-10 w-10 text-muted-foreground mb-2"/>
-                    <Button type="button" variant="outline" onClick={handleOpenMap}>Select on Google Map</Button>
-                    <p className="text-xs text-muted-foreground mt-2">Location accuracy gets you more calls.</p>
-                </div>
-            </div>
+            <FormField control={form.control} name="googleMapsLink" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Google Maps Link</FormLabel>
+                    <FormControl><Input placeholder="Paste Google Maps share link here" {...field} /></FormControl>
+                    <FormDescription>
+                        Open Google Maps, find the property, click 'Share', and copy the link.
+                    </FormDescription>
+                    <FormMessage />
+                </FormItem>
+            )} />
           </FormSection>
 
           <FormSection title="Price & Availability">
@@ -818,3 +807,5 @@ export default function PostPropertyPage() {
     </div>
   );
 }
+
+    

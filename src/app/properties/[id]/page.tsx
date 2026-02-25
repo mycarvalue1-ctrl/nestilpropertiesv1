@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { BedDouble, Bath, Expand, MapPin, Building, School, Hospital, Phone, BadgeCheck, Sparkles, Flame, Eye, Car, Fish, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { Property } from '@/lib/types';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
@@ -159,8 +159,13 @@ export default function PropertyDetailPage() {
 
   const propertyPhotos = (property.photos && property.photos.length > 0) ? property.photos : ['https://picsum.photos/seed/property/800/600'];
 
-  const mapQuery = encodeURIComponent(`${property.address}, ${property.city}, ${property.pincode}`);
-  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+  const mapUrl = useMemo(() => {
+    if (property.googleMapsLink) {
+      return property.googleMapsLink;
+    }
+    const mapQuery = encodeURIComponent(`${property.address}, ${property.city}, ${property.pincode}`);
+    return `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+  }, [property]);
 
   return (
     <div className="bg-background">
@@ -373,3 +378,5 @@ export default function PropertyDetailPage() {
     </div>
   );
 }
+
+    
