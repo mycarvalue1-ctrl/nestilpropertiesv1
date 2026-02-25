@@ -46,6 +46,12 @@ export function Header() {
   const adminUid = 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
   const isAdmin = currentUser?.uid === adminUid;
 
+  // Create a specific list for the mobile menu to avoid duplicate keys.
+  const mobileNavLinks = [
+    ...navLinks.filter(link => link.href !== '/post-property'),
+    { href: '/post-property', label: 'Post Property' }
+  ];
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -150,7 +156,7 @@ export function Header() {
                 <LocationSelector className="w-full justify-between p-2 hover:bg-accent rounded-md" />
               </div>
               <div className="flex flex-col space-y-4 mt-4">
-                {[...navLinks, { href: '/post-property', label: 'Post Property' }].map((link) => (
+                {mobileNavLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -167,5 +173,3 @@ export function Header() {
     </header>
   );
 }
-
-    
