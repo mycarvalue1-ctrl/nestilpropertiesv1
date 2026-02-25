@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -91,7 +92,7 @@ export default function Home() {
                 <TabsTrigger value="buy" className="data-[state=active]:bg-white/90 data-[state=active]:text-primary">For Sale</TabsTrigger>
                 <TabsTrigger value="plots" className="data-[state=active]:bg-white/90 data-[state=active]:text-primary">Plots</TabsTrigger>
               </TabsList>
-              <div className="mt-4 p-4 md:p-6 rounded-lg bg-background/80 backdrop-blur-sm shadow-2xl">
+              <div className="mt-4 p-4 md:p-6 rounded-lg bg-black/30 backdrop-blur-sm border border-white/20 shadow-2xl">
                 <form className="grid sm:grid-cols-4 items-center gap-4">
                   <div className="sm:col-span-3">
                     <Input
