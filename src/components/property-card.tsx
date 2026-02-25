@@ -3,8 +3,9 @@ import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { MapPin, Phone, CheckCircle } from 'lucide-react';
+import { MapPin, Phone, CheckCircle, Sparkles, Flame } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 const WhatsappIcon = () => (
   <svg
@@ -42,6 +43,21 @@ export function PropertyCard({ property }: PropertyCardProps) {
           className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-105"
           data-ai-hint="modern house"
         />
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-20">
+            {property.featured && (
+                <Badge>Featured</Badge>
+            )}
+             {property.isNew && (
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                    <Sparkles className="mr-1 h-3 w-3" /> New
+                </Badge>
+            )}
+            {property.isUrgent && (
+                <Badge variant="destructive">
+                    <Flame className="mr-1 h-3 w-3" /> Urgent
+                </Badge>
+            )}
+        </div>
       </div>
       <div className="p-4 space-y-2 flex-grow flex flex-col">
         <div className="flex-grow space-y-2">
