@@ -370,7 +370,7 @@ export default function PropertyDetailPage() {
                         <div className="flex justify-between items-center">
                             <div>
                                 <p className="text-secondary-foreground text-sm">{property.status}</p>
-                                <p className="text-3xl font-bold text-primary-foreground">₹{(property.price || 0).toLocaleString('en-IN')}</p>
+                                <p className="text-3xl font-bold text-primary">₹{(property.price || 0).toLocaleString('en-IN')}</p>
                             </div>
                             <Badge variant="default">{property.type}</Badge>
                         </div>
@@ -566,5 +566,3 @@ export default function PropertyDetailPage() {
     </div>
   );
 }
-
-    
