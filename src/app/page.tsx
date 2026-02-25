@@ -8,12 +8,11 @@ import { Building, Home as HomeIcon, Search, Trees } from 'lucide-react';
 import Link from 'next/link';
 import { locationData } from '@/lib/locations';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
@@ -65,7 +64,7 @@ export default function Home() {
 
   return (
     <>
-      <section className="relative py-20 md:py-32 bg-secondary/20 flex items-center justify-center text-center">
+      <section className="relative pt-20 pb-24 md:pt-32 md:pb-36 bg-secondary/20 flex items-center justify-center text-center">
         {heroImage && (
           <Image
             src={heroImage.imageUrl}
@@ -76,41 +75,39 @@ export default function Home() {
             data-ai-hint={heroImage.imageHint}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30" />
         <div className="container relative z-10 text-white">
-          <h1 className="text-4xl md:text-6xl font-bold font-headline drop-shadow-md">
-            Your Nearby Property Marketplace
+          <h1 className="text-4xl md:text-6xl font-bold font-headline drop-shadow-lg">
+            Find Your Perfect Place
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-white/90 drop-shadow">
-            Buy, Sell, or Rent Homes & Plots Around You with Ease
+            Discover homes, plots, and commercial properties tailored for you.
           </p>
-          <Card className="max-w-4xl mx-auto mt-8 p-4 shadow-lg bg-background/90 backdrop-blur-sm">
-            <form className="grid sm:grid-cols-4 items-center gap-4">
-              <div className="sm:col-span-2">
-                <Input
-                  placeholder="Search for location or property..."
-                  className="h-12 text-base"
-                />
+
+          <div className="max-w-3xl mx-auto mt-8">
+            <Tabs defaultValue="rent" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex mx-auto bg-black/30 backdrop-blur-sm border border-white/20 text-white">
+                <TabsTrigger value="rent" className="data-[state=active]:bg-white/90 data-[state=active]:text-primary">For Rent</TabsTrigger>
+                <TabsTrigger value="buy" className="data-[state=active]:bg-white/90 data-[state=active]:text-primary">For Sale</TabsTrigger>
+                <TabsTrigger value="plots" className="data-[state=active]:bg-white/90 data-[state=active]:text-primary">Plots</TabsTrigger>
+              </TabsList>
+              <div className="mt-4 p-4 md:p-6 rounded-lg bg-background/80 backdrop-blur-sm shadow-2xl">
+                <form className="grid sm:grid-cols-4 items-center gap-4">
+                  <div className="sm:col-span-3">
+                    <Input
+                      placeholder="Search by city, locality, or landmark..."
+                      className="h-12 text-base text-foreground bg-white"
+                    />
+                  </div>
+                  <Button size="lg" className="h-12 w-full text-base" variant="accent">
+                    <Search className="mr-2 h-5 w-5" />
+                    Search
+                  </Button>
+                </form>
               </div>
-              <div>
-                <Select>
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Property Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="house">House</SelectItem>
-                    <SelectItem value="flat">Flat</SelectItem>
-                    <SelectItem value="land">Land</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button size="lg" className="h-12 w-full text-base" variant="accent">
-                <Search className="mr-2 h-5 w-5" />
-                Search
-              </Button>
-            </form>
-          </Card>
+            </Tabs>
+          </div>
+
         </div>
       </section>
 
