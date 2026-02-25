@@ -2,7 +2,7 @@
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CheckCircle, XCircle, Clock, Download, Users, Eye, Ban, Trash2, MoreVertical, Filter, Search, Edit } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Download, Users, Eye, Ban, Trash2, MoreVertical, Filter, Search, Edit, Building2, LoaderCircle } from "lucide-react";
 import type { User as AppUser, Property } from "@/lib/types";
 import Link from "next/link";
 import { format, fromUnixTime } from "date-fns";
@@ -37,6 +37,8 @@ import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 function AdminSkeleton() {
   return (
@@ -54,6 +56,51 @@ function AdminSkeleton() {
   );
 }
 
+// PDF Template Component - This will be rendered off-screen
+const PropertyPdfCard = ({ property, innerRef }: { property: Property | null, innerRef: React.Ref<HTMLDivElement> }) => {
+    if (!property) return null;
+
+    const photoUrl = (property.photos && property.photos.length > 0) ? property.photos[0] : 'https://placehold.co/800x600/e2e8f0/e2e8f0?text=No+Image';
+
+    return (
+        <div ref={innerRef} className="w-[595px] p-10 bg-white text-black fixed -z-10 -left-[9999px] font-sans">
+            <div className="flex items-center gap-2 text-xl font-bold text-gray-800">
+                <Building2 className="h-6 w-6" />
+                <span>Nestil</span>
+            </div>
+            <p className="text-sm text-gray-500">Your Nearby Property Marketplace</p>
+            <div className="my-4 border-t border-gray-300"></div>
+            
+            <img src={photoUrl} crossOrigin="anonymous" className="w-full h-60 object-cover my-4 rounded-md" alt={property.title} />
+
+            <h1 className="text-xl font-bold mt-4">{property.title}</h1>
+            <p className="text-gray-600 text-sm">{property.address}, {property.city}</p>
+
+            <p className="text-2xl font-bold text-blue-600 my-3">₹{property.price.toLocaleString('en-IN')} {property.listingFor === 'Rent' ? '/ month' : ''}</p>
+            
+            <div className="grid grid-cols-3 gap-4 text-center my-4 py-3 border-y border-gray-200">
+                <div>
+                    <p className="font-bold text-lg">{property.bhk || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">BHK</p>
+                </div>
+                <div>
+                    <p className="font-bold text-lg">{property.baths || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Baths</p>
+                </div>
+                <div>
+                    <p className="font-bold text-lg">{property.areaSqFt ? property.areaSqFt.toLocaleString('en-IN') : 'N/A'}</p>
+                    <p className="text-xs text-gray-500">sqft</p>
+                </div>
+            </div>
+
+            <p className="text-xs text-gray-700 my-4 h-16 overflow-hidden">{property.description.substring(0, 250)}{property.description.length > 250 ? '...' : ''}</p>
+
+            <div className="my-4 border-t border-gray-300"></div>
+            <p className="text-center text-md font-bold text-gray-800">Contact: {property.owner?.name} - {property.owner?.phone}</p>
+            <p className="text-center text-xs text-gray-500 mt-1">Visit Nestil.in for more details</p>
+        </div>
+    )
+}
 
 export default function AdminPage() {
   const { user: currentUser, isUserLoading } = useUser();
@@ -63,6 +110,54 @@ export default function AdminPage() {
   
   const adminUid = 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
   const isAdmin = currentUser?.uid === adminUid;
+
+  const pdfRef = useRef<HTMLDivElement>(null);
+  const [pdfProperty, setPdfProperty] = useState<Property | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  useEffect(() => {
+    const generatePdf = async () => {
+        if (pdfProperty && pdfRef.current) {
+            setIsGeneratingPdf(true);
+            try {
+                const canvas = await html2canvas(pdfRef.current, {
+                    useCORS: true,
+                    scale: 2, // Higher scale for better quality
+                    backgroundColor: '#ffffff',
+                });
+                const imgData = canvas.toDataURL('image/png');
+                
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`${pdfProperty.title.replace(/\s/g, '_')}_nestil.pdf`);
+
+                toast({
+                    title: "PDF Generated",
+                    description: "Your property PDF has been downloaded."
+                });
+            } catch (e) {
+                console.error("Error generating PDF", e);
+                toast({
+                    variant: "destructive",
+                    title: "PDF Generation Failed",
+                    description: "Could not download the property PDF. Check console for details.",
+                });
+            } finally {
+                setPdfProperty(null); // Reset after generation
+                setIsGeneratingPdf(false);
+            }
+        }
+    };
+    generatePdf();
+  }, [pdfProperty, toast]);
+
+  const handleDownloadPdfClick = (property: Property) => {
+    if (isGeneratingPdf) return;
+    setPdfProperty(property);
+  }
 
   useEffect(() => {
     if (!isUserLoading && (!currentUser || currentUser.uid !== adminUid)) {
@@ -223,6 +318,7 @@ export default function AdminPage() {
 
   return (
     <div className="container py-12">
+      <PropertyPdfCard property={pdfProperty} innerRef={pdfRef} />
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">
@@ -483,8 +579,8 @@ export default function AdminPage() {
                     <TableCell className="text-right">
                        <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" disabled={isGeneratingPdf}>
+                                {isGeneratingPdf && pdfProperty?.id === prop.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -499,6 +595,13 @@ export default function AdminPage() {
                             >
                                 <CheckCircle className="mr-2 h-4 w-4" />
                                 {prop.listingStatus === 'sold' || prop.listingStatus === 'rented' ? 'Mark as Available' : 'Mark as Sold/Rented'}
+                            </DropdownMenuItem>
+                             <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => handleDownloadPdfClick(prop)}
+                                disabled={isGeneratingPdf}
+                            >
+                                <Download className="mr-2 h-4 w-4" />Download PDF
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                                 className="text-red-600 focus:text-red-600 cursor-pointer"
