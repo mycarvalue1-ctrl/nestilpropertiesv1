@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
+import { useFavorites } from '@/hooks/use-favorites';
 
 
 function PropertyList() {
@@ -28,6 +29,7 @@ function PropertyList() {
   const status = searchParams.get('status');
   const type = searchParams.get('type');
   const firestore = useFirestore();
+  const { favoriteIds, toggleFavorite } = useFavorites();
 
   // This is the fix: Ensure the 'isApproved' filter is always applied for public queries.
   const propertiesQuery = useMemoFirebase(() => {
@@ -86,7 +88,12 @@ function PropertyList() {
       {filteredProperties.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {filteredProperties.map((prop) => (
-            <PropertyCard key={prop.id} property={prop} />
+            <PropertyCard 
+              key={prop.id} 
+              property={prop}
+              isFavorited={favoriteIds.has(prop.id)}
+              onToggleFavorite={() => toggleFavorite(prop.id, favoriteIds.has(prop.id))}
+            />
           ))}
         </div>
       ) : (

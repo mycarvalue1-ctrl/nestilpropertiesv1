@@ -25,11 +25,13 @@ import {
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
+import { useFavorites } from '@/hooks/use-favorites';
 
 
 export default function Home() {
   const firestore = useFirestore();
   const [sortBy, setSortBy] = useState('relevance');
+  const { favoriteIds, toggleFavorite } = useFavorites();
 
   // Fetch all approved properties
   const approvedPropertiesQuery = useMemoFirebase(() => {
@@ -87,7 +89,7 @@ export default function Home() {
 
   return (
     <>
-      <section className="py-20 md:py-32 bg-secondary/50 text-center">
+      <section className="py-20 md:py-24 bg-secondary/50 text-center">
         <div className="container">
           <h1 className="text-4xl md:text-6xl font-bold font-headline text-primary">
             Find Your Perfect Place
@@ -103,7 +105,7 @@ export default function Home() {
                 <TabsTrigger value="buy">For Sale</TabsTrigger>
                 <TabsTrigger value="plots">Plots</TabsTrigger>
               </TabsList>
-              <div className="mt-4 p-4 md:p-6 rounded-lg bg-background border shadow-lg">
+              <div className="mt-4 p-4 md:p-6 rounded-lg bg-background/80 backdrop-blur-sm border shadow-lg">
                 <form className="grid sm:grid-cols-4 items-center gap-4">
                   <div className="sm:col-span-3">
                     <Input
@@ -111,7 +113,7 @@ export default function Home() {
                       className="h-12 text-base"
                     />
                   </div>
-                  <Button size="lg" className="h-12 w-full text-base" variant="accent">
+                  <Button size="lg" className="h-12 w-full text-base" variant="default">
                     <Search className="mr-2 h-5 w-5" />
                     Search
                   </Button>
@@ -160,7 +162,12 @@ export default function Home() {
               </>
             ) : (
               recentProperties?.map((prop) => (
-                <PropertyCard key={prop.id} property={prop} />
+                <PropertyCard
+                  key={prop.id}
+                  property={prop}
+                  isFavorited={favoriteIds.has(prop.id)}
+                  onToggleFavorite={() => toggleFavorite(prop.id, favoriteIds.has(prop.id))}
+                />
               ))
             )}
           </div>

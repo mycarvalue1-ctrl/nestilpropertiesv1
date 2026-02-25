@@ -3,10 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { MapPin, Phone, CheckCircle, Sparkles, Flame, BedDouble, Bath, Expand } from 'lucide-react';
+import { MapPin, Phone, CheckCircle, Sparkles, Flame, BedDouble, Bath, Expand, Heart, Share2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { differenceInDays, parseISO } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const WhatsappIcon = () => (
   <svg
@@ -21,11 +23,28 @@ const WhatsappIcon = () => (
 
 interface PropertyCardProps {
   property: Property;
+  isFavorited?: boolean;
+  onToggleFavorite?: (propertyId: string, isCurrentlyFavorited: boolean) => void;
 }
 
-export function PropertyCard({ property }: PropertyCardProps) {
+export function PropertyCard({ property, isFavorited, onToggleFavorite }: PropertyCardProps) {
+  const { toast } = useToast();
   const ownerType = property.owner?.isAgent ? 'Agent' : 'Owner';
   const isJustListed = property.dateAdded ? differenceInDays(new Date(), parseISO(property.dateAdded)) <= 3 : false;
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/properties/${property.id}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Link Copied!", description: "Property link copied to clipboard." });
+  };
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleFavorite?.(property.id, !!isFavorited);
+  };
 
   return (
     <Card className="group w-full overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col bg-card relative">
@@ -40,7 +59,17 @@ export function PropertyCard({ property }: PropertyCardProps) {
           className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-105"
           data-ai-hint="modern house"
         />
-        <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-20">
+        <div className="absolute top-2 right-2 flex items-center gap-2 z-20">
+          {onToggleFavorite && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70" onClick={handleFavoriteClick} title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}>
+              <Heart className={cn("h-4 w-4 transition-colors", isFavorited ? "fill-destructive text-destructive" : "")} />
+            </Button>
+          )}
+           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70" onClick={handleShareClick} title="Share property">
+              <Share2 className="h-4 w-4" />
+            </Button>
+        </div>
+        <div className="absolute top-2 left-2 flex flex-col items-end gap-1 z-20">
             {property.featured && (
                 <Badge variant="default" className="bg-accent text-accent-foreground">Featured</Badge>
             )}
@@ -119,7 +148,6 @@ export function PropertyCardSkeleton() {
           <Skeleton className="h-4 w-2/3" />
         </div>
         <div className="flex gap-2 border-t pt-3 mt-auto">
-            <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
         </div>
       </div>
