@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,10 +17,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { locationData, type State, type District, type Locality } from '@/lib/locations';
 import { MapPin, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Property } from '@/lib/types';
+
+
+// Define types for location hierarchy
+type Locality = { name: string };
+type District = { name: string; localities: Locality[] };
+type State = { name: string; districts: District[] };
 
 type Location = {
   state: string;
@@ -32,6 +40,9 @@ export function LocationSelector({ className }: { className?: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [step, setStep] = useState(1);
 
+  // This will hold the dynamically generated location data
+  const [locationData, setLocationData] = useState<State[]>([]);
+
   const [selectedState, setSelectedState] = useState<State | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
   const [selectedLocality, setSelectedLocality] = useState<Locality | null>(null);
@@ -42,9 +53,44 @@ export function LocationSelector({ className }: { className?: string }) {
   const [savedLocation, setSavedLocation] = useState<Location | null>(null);
   const { toast } = useToast();
 
+  // Firestore hooks to get property data
+  const firestore = useFirestore();
+  const propertiesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'properties');
+  }, [firestore]);
+  const { data: allProperties } = useCollection<Property>(propertiesQuery);
+
+  // Effect to process properties into location data
   useEffect(() => {
-    // This code now runs only on the client, after the initial server render is complete.
-    // This prevents a mismatch between server and client HTML (hydration error).
+    if (allProperties) {
+      const apDistricts = new Map<string, Set<string>>();
+
+      for (const prop of allProperties) {
+        if (prop.city && prop.address) {
+          if (!apDistricts.has(prop.city)) {
+            apDistricts.set(prop.city, new Set());
+          }
+          apDistricts.get(prop.city)!.add(prop.address);
+        }
+      }
+      
+      const dynamicDistricts: District[] = Array.from(apDistricts.entries()).map(([districtName, localitySet]) => ({
+        name: districtName,
+        localities: Array.from(localitySet).map(localityName => ({ name: localityName })).sort((a,b) => a.name.localeCompare(b.name))
+      })).sort((a,b) => a.name.localeCompare(b.name));
+
+      const dynamicStates: State[] = [{
+        name: 'Andhra Pradesh',
+        districts: dynamicDistricts
+      }];
+
+      setLocationData(dynamicStates);
+    }
+  }, [allProperties]);
+
+
+  useEffect(() => {
     try {
       const locationJson = localStorage.getItem('userLocation');
       if (locationJson) {

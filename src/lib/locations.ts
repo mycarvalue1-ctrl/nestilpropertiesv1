@@ -12,6 +12,8 @@ export type State = {
   districts: District[];
 };
 
+// This static data is no longer the primary source for the location selector, 
+// but can be kept as a fallback or for other purposes.
 export const locationData: State[] = [
   {
     name: 'Andhra Pradesh',
