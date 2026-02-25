@@ -65,9 +65,15 @@ service cloud.firestore {
     // Site Visit Rules
     // =================================
     match /site_visits/{visitId} {
-      // Visitor can create their own request. Visitor and Owner can read it.
+      // Visitor can create their own request.
       allow create: if isOwner(request.resource.data.visitorId);
-      allow read: if isOwner(resource.data.visitorId) || isOwner(resource.data.ownerId) || isAdmin();
+
+      // A single document can be read by the visitor, the owner, or an admin.
+      allow get: if isOwner(resource.data.visitorId) || isOwner(resource.data.ownerId) || isAdmin();
+
+      // Owners can list visits for their properties. Admins can list all visits.
+      // This rule requires owners to use a `where('ownerId', '==', uid)` clause in their queries.
+      allow list: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.ownerId);
       
       // Owner can update the status of the request (confirm/reject). Admin can too.
       allow update: if isOwner(resource.data.ownerId) || isAdmin();
@@ -91,5 +97,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
