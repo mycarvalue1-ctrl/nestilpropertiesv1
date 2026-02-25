@@ -3,13 +3,105 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Edit, MoreVertical, Trash, EyeOff, Eye, LoaderCircle } from "lucide-react";
+import { Edit, MoreVertical, Trash, EyeOff, Eye, LoaderCircle, Download, Building2, BedDouble, Bath, Expand, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import type { Property } from '@/lib/types';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRef, useState, useEffect } from "react";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { useToast } from "@/hooks/use-toast";
+
+// PDF Template Component - This will be rendered off-screen
+const PropertyPdfCard = ({ property, innerRef }: { property: Property | null, innerRef: React.Ref<HTMLDivElement> }) => {
+    if (!property) return null;
+
+    const photoUrl = (property.photos && property.photos.length > 0) ? property.photos[0] : 'https://placehold.co/800x600/e2e8f0/e2e8f0?text=No+Image';
+    const maskedPhone = property.owner?.phone ? `******${property.owner.phone.slice(-4)}` : 'N/A';
+
+    return (
+        <div ref={innerRef} className="w-[595px] bg-white text-gray-800 fixed -z-10 -left-[9999px] font-sans">
+            {/* Page Wrapper */}
+            <div className="min-h-[842px] flex flex-col"> 
+                {/* Header */}
+                <header className="bg-primary text-primary-foreground p-6 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <Building2 className="h-8 w-8" />
+                        <span className="text-3xl font-bold">Nestil</span>
+                    </div>
+                    <p className="text-sm">www.nestil.in</p>
+                </header>
+
+                {/* Main content */}
+                <main className="p-8 flex-grow">
+                    {/* Image */}
+                    <img src={photoUrl} crossOrigin="anonymous" className="w-full h-64 object-cover rounded-xl shadow-lg border-4 border-white" alt={property.title} />
+
+                    {/* Title & Price */}
+                    <div className="mt-6 flex justify-between items-start">
+                        <div>
+                            <h1 className="text-3xl font-bold text-primary">{property.title}</h1>
+                            <p className="text-muted-foreground mt-1 flex items-center gap-2">
+                                <MapPin className="h-4 w-4"/>
+                                {property.address}, {property.city}
+                            </p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-sm text-muted-foreground">{property.listingFor === 'Rent' ? 'For Rent' : 'For Sale'}</p>
+                            <p className="text-3xl font-bold text-accent">
+                                ₹{property.price.toLocaleString('en-IN')}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {/* Details Section */}
+                    <div className="mt-8 grid grid-cols-3 gap-6 text-center bg-secondary/50 p-4 rounded-lg">
+                         <div className="flex flex-col items-center gap-1">
+                            <BedDouble className="h-7 w-7 text-primary" />
+                            <p className="font-bold text-lg">{property.bhk || 'N/A'}</p>
+                            <p className="text-sm text-muted-foreground">BHK</p>
+                        </div>
+                         <div className="flex flex-col items-center gap-1">
+                            <Bath className="h-7 w-7 text-primary" />
+                            <p className="font-bold text-lg">{property.baths || 'N/A'}</p>
+                            <p className="text-sm text-muted-foreground">Baths</p>
+                        </div>
+                         <div className="flex flex-col items-center gap-1">
+                            <Expand className="h-7 w-7 text-primary" />
+                            <p className="font-bold text-lg">{property.areaSqFt ? property.areaSqFt.toLocaleString('en-IN') : 'N/A'}</p>
+                            <p className="text-sm text-muted-foreground">sqft</p>
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="mt-8">
+                        <h2 className="text-xl font-semibold text-primary border-b-2 border-primary/20 pb-2">About this property</h2>
+                        <p className="text-foreground/80 mt-3 text-sm leading-relaxed">
+                            {property.description.substring(0, 400)}{property.description.length > 400 ? '...' : ''}
+                        </p>
+                    </div>
+                </main>
+                
+                {/* Footer */}
+                <footer className="mt-auto p-6 bg-secondary/30">
+                    <div className="flex justify-between items-center">
+                         <div>
+                            <p className="font-bold text-lg text-primary">Contact {property.owner?.isAgent ? 'Agent' : 'Owner'}</p>
+                            <p className="text-foreground">{property.owner?.name} - {maskedPhone}</p>
+                         </div>
+                         <div className="text-right">
+                            <p className="text-xs text-muted-foreground">Property ID: {property.id}</p>
+                             <p className="text-xs text-muted-foreground">Visit Nestil.in for more details</p>
+                         </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    )
+}
 
 function MyPropertiesSkeleton() {
   return (
@@ -44,6 +136,11 @@ function MyPropertiesSkeleton() {
 export default function MyPropertiesPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const pdfRef = useRef<HTMLDivElement>(null);
+  const [pdfProperty, setPdfProperty] = useState<Property | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const userPropertiesQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -51,6 +148,39 @@ export default function MyPropertiesPage() {
   }, [user, firestore]);
 
   const { data: userProperties, isLoading } = useCollection<Property>(userPropertiesQuery);
+
+  useEffect(() => {
+    const generatePdf = async () => {
+        if (pdfProperty && pdfRef.current) {
+            setIsGeneratingPdf(true);
+            try {
+                const canvas = await html2canvas(pdfRef.current, { useCORS: true, scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+                
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`${pdfProperty.title.replace(/\s/g, '_')}_nestil.pdf`);
+
+                toast({ title: "PDF Generated", description: "Your property PDF has been downloaded." });
+            } catch (e) {
+                console.error("Error generating PDF", e);
+                toast({ variant: "destructive", title: "PDF Generation Failed", description: "Could not download property PDF." });
+            } finally {
+                setPdfProperty(null);
+                setIsGeneratingPdf(false);
+            }
+        }
+    };
+    generatePdf();
+  }, [pdfProperty, toast]);
+
+  const handleDownloadPdfClick = (property: Property) => {
+    if (isGeneratingPdf) return;
+    setPdfProperty(property);
+  }
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -72,6 +202,7 @@ export default function MyPropertiesPage() {
 
   return (
     <div className="w-full">
+      <PropertyPdfCard property={pdfProperty} innerRef={pdfRef} />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">My Properties</h1>
         <Button asChild>
@@ -114,8 +245,8 @@ export default function MyPropertiesPage() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" disabled={isGeneratingPdf && pdfProperty?.id === prop.id}>
+                        {isGeneratingPdf && pdfProperty?.id === prop.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -124,6 +255,9 @@ export default function MyPropertiesPage() {
                             <><Eye className="mr-2 h-4 w-4" /> Mark as Available</> :
                             <><EyeOff className="mr-2 h-4 w-4" /> Mark as Rented/Sold</>
                         }
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownloadPdfClick(prop)} disabled={isGeneratingPdf} className="cursor-pointer">
+                        <Download className="mr-2 h-4 w-4" /> Download PDF
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
