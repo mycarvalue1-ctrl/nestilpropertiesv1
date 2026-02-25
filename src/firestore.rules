@@ -43,20 +43,19 @@ service cloud.firestore {
     // Properties Collection Rules
     // =================================
     match /properties/{propertyId} {
-      // Admin has full access.
-      // For others: LIST is allowed if the query only asks for approved properties.
-      // This forces unauthenticated queries to include `where('isApproved', '==', true)`.
-      allow list: if isAdmin() || (resource.data.isApproved == true);
-
-      // GET is public for any single document if you know the ID.
-      // Visibility is controlled by the client-side queries.
-      allow get: if true;
+      // READ (get, list):
+      // Anyone can read a property if it's approved.
+      // The owner or an admin can read it regardless of approval status.
+      // This rule works because client-side queries MUST filter by `isApproved == true` for public users.
+      allow read: if (resource.data.isApproved == true) || 
+                   (isSignedIn() && isOwner(resource.data.ownerId)) || 
+                   isAdmin();
 
       // CREATE: Any signed-in user can create a property for themselves.
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
 
       // UPDATE / DELETE: Only the owner or an admin can modify/delete.
-      allow update, delete: if isAdmin() || isOwner(resource.data.ownerId);
+      allow update, delete: if (isSignedIn() && isOwner(resource.data.ownerId)) || isAdmin();
     }
 
     // =================================
