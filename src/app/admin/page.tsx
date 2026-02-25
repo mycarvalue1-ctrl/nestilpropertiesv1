@@ -64,41 +64,63 @@ const PropertyPdfCard = ({ property, innerRef }: { property: Property | null, in
     const maskedPhone = property.owner?.phone ? `******${property.owner.phone.slice(-4)}` : 'N/A';
 
     return (
-        <div ref={innerRef} className="w-[595px] p-10 bg-white text-black fixed -z-10 -left-[9999px] font-sans">
-            <div className="flex items-center gap-2 text-xl font-bold text-gray-800">
-                <Building2 className="h-6 w-6" />
-                <span>Nestil</span>
+        <div ref={innerRef} className="w-[595px] bg-gray-100 text-gray-800 fixed -z-10 -left-[9999px] font-sans text-base leading-normal">
+            <div className="p-8">
+                {/* Header */}
+                <div className="flex justify-between items-center pb-4 border-b border-gray-300">
+                    <div className="flex items-center gap-2 text-xl font-bold">
+                        <Building2 className="h-6 w-6" />
+                        <span>Nestil</span>
+                    </div>
+                    <p className="text-sm">Your Nearby Property Marketplace</p>
+                </div>
+
+                {/* Main Content */}
+                <div className="mt-6">
+                    {/* Image */}
+                    <img src={photoUrl} crossOrigin="anonymous" className="w-full h-80 object-cover rounded-lg shadow-md" alt={property.title} />
+
+                    <div className="mt-6 bg-white p-6 rounded-lg shadow">
+                         {/* Title and Address */}
+                        <h1 className="text-2xl font-bold text-gray-900">{property.title}</h1>
+                        <p className="text-gray-500 mt-1">{property.address}, {property.city}</p>
+
+                        {/* Price */}
+                        <p className="text-3xl font-bold text-blue-600 my-4">
+                            ₹{property.price.toLocaleString('en-IN')}
+                            <span className="text-xl font-normal">{property.listingFor === 'Rent' ? ' / month' : ''}</span>
+                        </p>
+
+                        {/* Key Details */}
+                        <div className="grid grid-cols-3 gap-4 text-center my-4 py-4 border-t border-b border-gray-200">
+                            <div>
+                                <p className="font-bold text-xl">{property.bhk || 'N/A'}</p>
+                                <p className="text-sm text-gray-500">BHK</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-xl">{property.baths || 'N/A'}</p>
+                                <p className="text-sm text-gray-500">Baths</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-xl">{property.areaSqFt ? property.areaSqFt.toLocaleString('en-IN') : 'N/A'}</p>
+                                <p className="text-sm text-gray-500">sqft</p>
+                            </div>
+                        </div>
+
+                         {/* Description */}
+                        <p className="text-sm text-gray-600 mt-4 h-20 overflow-hidden">
+                            {property.description.substring(0, 300)}{property.description.length > 300 ? '...' : ''}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="mt-6 text-center">
+                    <p className="text-lg font-bold">Contact: {property.owner?.name} - {maskedPhone}</p>
+                    <p className="text-sm text-gray-500 mt-1">For more details and photos, visit Nestil.in</p>
+                    <p className="text-xs text-gray-400 mt-4">Property ID: {property.id}</p>
+                </div>
             </div>
-            <p className="text-sm text-gray-500">Your Nearby Property Marketplace</p>
-            <div className="my-4 border-t border-gray-300"></div>
-            
-            <img src={photoUrl} crossOrigin="anonymous" className="w-full h-96 object-cover my-4 rounded-md" alt={property.title} />
-
-            <h1 className="text-xl font-bold mt-4">{property.title}</h1>
-            <p className="text-gray-600 text-sm">{property.address}, {property.city}</p>
-
-            <p className="text-2xl font-bold text-blue-600 my-3">₹{property.price.toLocaleString('en-IN')} {property.listingFor === 'Rent' ? '/ month' : ''}</p>
-            
-            <div className="grid grid-cols-3 gap-4 text-center my-4 py-3 border-y border-gray-200">
-                <div>
-                    <p className="font-bold text-lg">{property.bhk || 'N/A'}</p>
-                    <p className="text-xs text-gray-500">BHK</p>
-                </div>
-                <div>
-                    <p className="font-bold text-lg">{property.baths || 'N/A'}</p>
-                    <p className="text-xs text-gray-500">Baths</p>
-                </div>
-                <div>
-                    <p className="font-bold text-lg">{property.areaSqFt ? property.areaSqFt.toLocaleString('en-IN') : 'N/A'}</p>
-                    <p className="text-xs text-gray-500">sqft</p>
-                </div>
-            </div>
-
-            <p className="text-xs text-gray-700 my-4 h-16 overflow-hidden">{property.description.substring(0, 250)}{property.description.length > 250 ? '...' : ''}</p>
-
-            <div className="my-4 border-t border-gray-300"></div>
-            <p className="text-center text-md font-bold text-gray-800">Contact: {property.owner?.name} - {maskedPhone}</p>
-            <p className="text-center text-xs text-gray-500 mt-1">Visit Nestil.in for more details</p>
         </div>
     )
 }
