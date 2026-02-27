@@ -516,7 +516,7 @@ export default function PostPropertyPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Select property type" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['Apartment', 'Independent House', 'Villa', 'Plot', 'Commercial', 'PG'].map(type => 
+                        {['Apartment', 'House', 'Villa', 'Plot', 'Commercial', 'PG'].map(type => 
                           <SelectItem key={type} value={type}>{type}</SelectItem>
                         )}
                       </SelectContent>
@@ -688,7 +688,7 @@ export default function PostPropertyPage() {
 
           {propertyType && (
             <FormSection title="Property Details">
-              {['Apartment', 'Independent House', 'Villa'].includes(propertyType) && (
+              {['Apartment', 'House', 'Villa'].includes(propertyType) && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <FormField control={form.control} name="details.bhk" render={({ field }) => (<FormItem><FormLabel>BHK</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Beds"/></SelectTrigger></FormControl><SelectContent>{['1', '2', '3', '4+'].map(v => <SelectItem key={v} value={`${v} BHK`}>{v} BHK</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
@@ -944,5 +944,3 @@ export default function PostPropertyPage() {
     </div>
   );
 }
-
-    

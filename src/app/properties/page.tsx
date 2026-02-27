@@ -1,7 +1,8 @@
+
 'use client';
 
-import { Suspense, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useMemo, useCallback } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { PropertyCard, PropertyCardSkeleton } from '@/components/property-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -27,14 +28,12 @@ import { useFavorites } from '@/hooks/use-favorites';
 function PropertyList() {
   const searchParams = useSearchParams();
   const status = searchParams.get('status');
-  const type = searchParams.get('type');
+  const types = searchParams.getAll('type');
   const firestore = useFirestore();
   const { favoriteIds, toggleFavorite } = useFavorites();
 
-  // This is the fix: Ensure the 'isApproved' filter is always applied for public queries.
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    // The query MUST include where('isApproved', '==', true) to satisfy security rules for public access.
     return query(collection(firestore, 'properties'), where('isApproved', '==', true));
   }, [firestore]);
 
@@ -42,19 +41,22 @@ function PropertyList() {
 
   const filteredProperties = useMemo(() => {
     if (!allApprovedProperties) return [];
-    // Client-side filtering for additional search params like 'status' and 'type'.
-    // This happens *after* the secure query has returned the data.
+
+    const lowerCaseTypes = types.map(t => t.toLowerCase());
+
     return allApprovedProperties.filter(p => {
       let match = true;
       if (status && p.status !== status) {
         match = false;
       }
-      if (type && p.type && p.type.toLowerCase() !== type.toLowerCase()) {
+      
+      if (lowerCaseTypes.length > 0 && (!p.type || !lowerCaseTypes.includes(p.type.toLowerCase()))) {
         match = false;
       }
+
       return match;
     });
-  }, [allApprovedProperties, status, type]);
+  }, [allApprovedProperties, status, types]);
 
   if (isLoading) {
     return (
@@ -106,7 +108,37 @@ function PropertyList() {
   );
 }
 
+const propertyTypesForFilter = ['Apartment', 'House', 'Villa', 'Plot', 'Commercial', 'PG'];
+
 function Filters() {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    const handleTypeChange = useCallback((checked: boolean | 'indeterminate', type: string) => {
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        
+        let newTypes = current.getAll('type');
+
+        if (checked) {
+            if (!newTypes.some(t => t.toLowerCase() === type.toLowerCase())) {
+                newTypes.push(type);
+            }
+        } else {
+            newTypes = newTypes.filter(t => t.toLowerCase() !== type.toLowerCase());
+        }
+
+        current.delete('type');
+        newTypes.forEach(t => current.append('type', t));
+
+        const search = current.toString();
+        const query = search ? `?${search}` : "";
+
+        router.push(`${pathname}${query}`, {scroll: false});
+    }, [searchParams, router, pathname]);
+
+    const selectedTypes = searchParams.getAll('type');
+
     return (
         <Card className="sticky top-20">
         <CardHeader>
@@ -123,6 +155,22 @@ function Filters() {
             </div>
           </div>
           
+          <div className="space-y-2">
+            <Label>Property Type</Label>
+            <div className="space-y-2">
+                {propertyTypesForFilter.map(item => (
+                    <div key={item} className="flex items-center space-x-2">
+                        <Checkbox 
+                            id={`type-${item}`} 
+                            checked={selectedTypes.some(t => t.toLowerCase() === item.toLowerCase())}
+                            onCheckedChange={(checked) => handleTypeChange(checked, item)}
+                        />
+                        <Label htmlFor={`type-${item}`} className="font-normal">{item}</Label>
+                    </div>
+                ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Price Range</Label>
             <Slider defaultValue={[0, 2000000]} max={5000000} step={10000} />
@@ -165,7 +213,7 @@ function Filters() {
             </div>
           </div>
 
-          <Button className="w-full">Apply Filters</Button>
+          <Button className="w-full" disabled>Apply Filters</Button>
 
         </CardContent>
       </Card>

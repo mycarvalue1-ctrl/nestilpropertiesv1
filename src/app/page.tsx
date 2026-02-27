@@ -225,7 +225,7 @@ export default function Home() {
                 </CardContent>
               </Card>
             </Link>
-            <Link href="/properties?type=Land" className="group">
+            <Link href="/properties?type=Plot" className="group">
               <Card className="overflow-hidden hover:shadow-xl transition-shadow border-none">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center bg-card h-full">
                   <div className="bg-secondary p-4 rounded-full mb-3">
