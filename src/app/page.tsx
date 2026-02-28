@@ -15,13 +15,6 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
@@ -30,39 +23,18 @@ import { useFavorites } from '@/hooks/use-favorites';
 
 export default function Home() {
   const firestore = useFirestore();
-  const [sortBy, setSortBy] = useState('relevance');
   const { favoriteIds, toggleFavorite } = useFavorites();
 
   const recentPropertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
 
-    const q = collection(firestore, 'properties');
-    
-    const constraints = [
-        where('isApproved', '==', true)
-    ];
-
-    switch (sortBy) {
-      case 'price-asc':
-        constraints.push(orderBy('price', 'asc'));
-        break;
-      case 'price-desc':
-        constraints.push(orderBy('price', 'desc'));
-        break;
-      case 'recent':
-        constraints.push(orderBy('dateAdded', 'desc'));
-        break;
-      case 'relevance':
-      default:
-        constraints.push(orderBy('featured', 'desc'));
-        constraints.push(orderBy('dateAdded', 'desc'));
-        break;
-    }
-
-    constraints.push(limit(6));
-    
-    return query(q, ...constraints);
-  }, [firestore, sortBy]);
+    return query(
+      collection(firestore, 'properties'),
+      where('isApproved', '==', true),
+      orderBy('dateAdded', 'desc'),
+      limit(6)
+    );
+  }, [firestore]);
 
   const { data: recentProperties, isLoading } = useCollection<Property>(recentPropertiesQuery);
 
@@ -132,19 +104,6 @@ export default function Home() {
               <p className="text-muted-foreground mt-2">
                 Check out the latest properties fresh on the market.
               </p>
-            </div>
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="relevance">Relevance</SelectItem>
-                  <SelectItem value="recent">Fresh Properties</SelectItem>
-                  <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                  <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

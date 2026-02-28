@@ -32,7 +32,6 @@ function PropertyList() {
 
   const status = searchParams.get('status');
   const types = searchParams.getAll('type');
-  const sortBy = searchParams.get('sortBy') || 'recent';
 
   const firestore = useFirestore();
   const { favoriteIds, toggleFavorite } = useFavorites();
@@ -41,27 +40,17 @@ function PropertyList() {
     if (!firestore) return null;
 
     const q = collection(firestore, 'properties');
-    const constraints: any[] = [where('isApproved', '==', true)];
+    const constraints: any[] = [
+        where('isApproved', '==', true),
+        orderBy('dateAdded', 'desc')
+    ];
 
     if (status) {
       constraints.push(where('status', '==', status));
     }
-    
-    switch (sortBy) {
-      case 'price-asc':
-        constraints.push(orderBy('price', 'asc'));
-        break;
-      case 'price-desc':
-        constraints.push(orderBy('price', 'desc'));
-        break;
-      case 'recent':
-      default:
-        constraints.push(orderBy('dateAdded', 'desc'));
-        break;
-    }
 
     return query(q, ...constraints);
-  }, [firestore, status, sortBy]);
+  }, [firestore, status]);
 
   const { data: serverFilteredProperties, isLoading } = useCollection<Property>(propertiesQuery);
   
@@ -92,19 +81,11 @@ function PropertyList() {
     });
   }, [serverFilteredProperties, types]);
 
-  const handleSortChange = useCallback((value: string) => {
-      const current = new URLSearchParams(Array.from(searchParams.entries()));
-      current.set('sortBy', value);
-      const search = current.toString();
-      router.push(`${pathname}?${search}`, {scroll: false});
-  }, [searchParams, router, pathname]);
-
   if (isLoading) {
     return (
       <div className="flex-1">
         <div className="flex justify-between items-center mb-4">
           <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-10 w-[180px]" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {[...Array(6)].map((_, i) => <PropertyCardSkeleton key={i} />)}
@@ -117,16 +98,6 @@ function PropertyList() {
     <div className="flex-1">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">{`Showing ${filteredProperties.length} properties`}</h2>
-        <Select value={sortBy} onValueChange={handleSortChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="recent">Most Recent</SelectItem>
-            <SelectItem value="price-asc">Price: Low to High</SelectItem>
-            <SelectItem value="price-desc">Price: High to Low</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
       {filteredProperties.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
