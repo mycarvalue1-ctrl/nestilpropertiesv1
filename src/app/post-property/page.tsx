@@ -57,6 +57,13 @@ const amenitiesList = [
   'Garden', 'Gym', 'Lift', 'Municipal Water', 'Pets Allowed', 'Power Backup', 'Security', 'Terrace Access'
 ];
 
+const propertyTypes = [
+    '1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 
+    'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel'
+];
+const residentialTypes = ['1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 'Villa', 'Row House', 'Duplex', 'Studio Apartment'];
+
+
 // Zod schema for form validation
 const formSchema = z.object({
   propertyType: z.string({ required_error: "Property type is required." }).min(1, "Property type is required."),
@@ -408,6 +415,17 @@ export default function PostPropertyPage() {
       
       const finalPhotos = [...(values.existingPhotos || []), ...uploadedPhotoURLs];
 
+      let bhkValue = values.details.bhk || '';
+      let bedsValue = parseInt(bhkValue, 10) || 0;
+
+      if (values.propertyType.includes('BHK Flat')) {
+          bhkValue = values.propertyType.replace(' Flat', '');
+          bedsValue = parseInt(bhkValue, 10);
+      } else if (values.propertyType === 'Studio Apartment') {
+          bhkValue = 'Studio';
+          bedsValue = 1;
+      }
+
       const docData = {
         title: values.title,
         description: values.description,
@@ -427,8 +445,8 @@ export default function PostPropertyPage() {
         preferredTenants: values.preferredTenants,
         visitAvailability: values.visitAvailability,
         areaSqFt: values.details.area || values.details.plotArea || 0,
-        bhk: values.details.bhk || '',
-        beds: Number(values.details.bhk?.charAt(0) || '0'),
+        bhk: bhkValue,
+        beds: bedsValue,
         baths: Number(values.details.bathrooms?.charAt(0) || '0'),
         furnishing: values.details.furnishing,
         floor: values.details.floor,
@@ -516,7 +534,7 @@ export default function PostPropertyPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Select property type" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['Apartment', 'House', 'Villa', 'Plot', 'Commercial', 'PG'].map(type => 
+                        {propertyTypes.map(type => 
                           <SelectItem key={type} value={type}>{type}</SelectItem>
                         )}
                       </SelectContent>
@@ -686,32 +704,24 @@ export default function PostPropertyPage() {
               )} />
           </FormSection>
 
-          {propertyType && (
+          {propertyType && residentialTypes.includes(propertyType) && (
             <FormSection title="Property Details">
-              {['Apartment', 'House', 'Villa'].includes(propertyType) && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  { !propertyType.includes('BHK') && propertyType !== 'Studio Apartment' && (
                     <FormField control={form.control} name="details.bhk" render={({ field }) => (<FormItem><FormLabel>BHK</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Beds"/></SelectTrigger></FormControl><SelectContent>{['1', '2', '3', '4+'].map(v => <SelectItem key={v} value={`${v} BHK`}>{v} BHK</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="details.bathrooms" render={({ field }) => (<FormItem><FormLabel>Bathrooms</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Baths"/></SelectTrigger></FormControl><SelectContent>{['1', '2', '3', '4+'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="details.floor" render={({ field }) => (<FormItem><FormLabel>Floor</FormLabel><FormControl><Input placeholder="e.g., 3" {...field}/></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="details.totalFloors" render={({ field }) => (<FormItem><FormLabel>Total Floors</FormLabel><FormControl><Input placeholder="e.g., 5" {...field}/></FormControl><FormMessage /></FormItem>)} />
-                  </div>
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                       <FormField control={form.control} name="details.area" render={({ field }) => (<FormItem><FormLabel>Built-up Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="e.g., 1200" {...field}/></FormControl><FormMessage /></FormItem>)} />
-                       <FormField control={form.control} name="details.facing" render={({ field }) => (<FormItem><FormLabel>Facing</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select direction"/></SelectTrigger></FormControl><SelectContent>{['East', 'West', 'North', 'South', 'North-East', 'North-West', 'South-East', 'South-West'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                       <FormField control={form.control} name="details.age" render={({ field }) => (<FormItem><FormLabel>Age of Property</FormLabel><FormControl><Input placeholder="e.g., 2 years" {...field}/></FormControl><FormMessage /></FormItem>)} />
-                   </div>
-                   <FormField control={form.control} name="details.furnishing" render={({ field }) => (<FormItem><FormLabel>Furnishing</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2">{['Unfurnished', 'Semi-furnished', 'Fully-furnished'].map(type => (<FormItem key={type} className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value={type} id={`furnish-${type}`} /></FormControl><Label htmlFor={`furnish-${type}`}>{type}</Label></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} />
+                  )}
+                  <FormField control={form.control} name="details.bathrooms" render={({ field }) => (<FormItem><FormLabel>Bathrooms</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Baths"/></SelectTrigger></FormControl><SelectContent>{['1', '2', '3', '4+'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="details.floor" render={({ field }) => (<FormItem><FormLabel>Floor</FormLabel><FormControl><Input placeholder="e.g., 3" {...field}/></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="details.totalFloors" render={({ field }) => (<FormItem><FormLabel>Total Floors</FormLabel><FormControl><Input placeholder="e.g., 5" {...field}/></FormControl><FormMessage /></FormItem>)} />
                 </div>
-              )}
-              {propertyType === 'Plot' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField control={form.control} name="details.plotArea" render={({ field }) => (<FormItem><FormLabel>Plot Area (sq yards)</FormLabel><FormControl><Input type="number" placeholder="e.g., 200" {...field}/></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="details.facing" render={({ field }) => (<FormItem><FormLabel>Plot Facing</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select direction"/></SelectTrigger></FormControl><SelectContent>{['East', 'West', 'North', 'South'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="details.roadWidth" render={({ field }) => (<FormItem><FormLabel>Road Width (ft)</FormLabel><FormControl><Input type="number" placeholder="e.g., 40" {...field}/></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="details.approved" render={({ field }) => (<FormItem><FormLabel>DTCP / RERA Approved?</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex items-center space-x-4 pt-2"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Yes" /></FormControl><Label>Yes</Label></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="No" /></FormControl><Label>No</Label></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
-                  </div>
-              )}
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     <FormField control={form.control} name="details.area" render={({ field }) => (<FormItem><FormLabel>Built-up Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="e.g., 1200" {...field}/></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="details.facing" render={({ field }) => (<FormItem><FormLabel>Facing</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select direction"/></SelectTrigger></FormControl><SelectContent>{['East', 'West', 'North', 'South', 'North-East', 'North-West', 'South-East', 'South-West'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="details.age" render={({ field }) => (<FormItem><FormLabel>Age of Property</FormLabel><FormControl><Input placeholder="e.g., 2 years" {...field}/></FormControl><FormMessage /></FormItem>)} />
+                 </div>
+                 <FormField control={form.control} name="details.furnishing" render={({ field }) => (<FormItem><FormLabel>Furnishing</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2">{['Unfurnished', 'Semi-furnished', 'Fully-furnished'].map(type => (<FormItem key={type} className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value={type} id={`furnish-${type}`} /></FormControl><Label htmlFor={`furnish-${type}`}>{type}</Label></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} />
+              </div>
             </FormSection>
           )}
 
