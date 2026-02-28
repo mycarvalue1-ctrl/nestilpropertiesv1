@@ -30,12 +30,12 @@ export default function AdminLoginPage() {
   const auth = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const adminUid = 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
+  const adminEmail = 'helpnestil@gmail.com';
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "admin@nestil.in",
+      email: "helpnestil@gmail.com",
       password: "",
     },
   });
@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       
-      if (userCredential.user.uid === adminUid) {
+      if (userCredential.user.email === adminEmail) {
         toast({
           title: "Admin Login Successful",
           description: "Welcome to the admin dashboard.",
@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
             <Shield className="mx-auto h-12 w-12 text-primary" />
           <CardTitle className="text-2xl mt-4">Admin Login</CardTitle>
           <CardDescription>
-            Use the administrator credentials to manage the application. The default password is 'password'.
+            Use the administrator credentials to manage the application. If you haven't, sign up with the admin email first.
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -87,7 +87,7 @@ export default function AdminLoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="admin@nestil.in" {...field} />
+                      <Input type="email" placeholder="helpnestil@gmail.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

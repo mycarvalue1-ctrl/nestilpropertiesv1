@@ -11,8 +11,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Safely check for admin UID, ensuring user is signed in first.
-      return isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
+      // The admin is identified by their email address.
+      return isSignedIn() && request.auth.token.email == 'helpnestil@gmail.com';
     }
 
     function isOwner(ownerId) {
@@ -46,9 +46,8 @@ service cloud.firestore {
       allow read, write: if isAdmin();
       
       // --- OWNERS ---
-      // An owner can read, update, or delete their own property documents.
-      // 'read' includes 'get' and 'list', so an owner can see their own properties regardless of approval status.
-      allow read, update, delete: if isSignedIn() && request.auth.uid == resource.data.ownerId;
+      // An owner can read their own property documents.
+      allow get, list, update, delete: if isSignedIn() && request.auth.uid == resource.data.ownerId;
       
       // An owner can create a property for themselves.
       allow create: if isSignedIn() && request.auth.uid == request.resource.data.ownerId;

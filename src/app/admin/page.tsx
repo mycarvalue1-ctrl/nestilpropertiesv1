@@ -151,8 +151,8 @@ export default function AdminPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   
-  const adminUid = 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
-  const isAdmin = currentUser?.uid === adminUid;
+  const adminEmail = 'helpnestil@gmail.com';
+  const isAdmin = currentUser?.email === adminEmail;
 
   const pdfRef = useRef<HTMLDivElement>(null);
   const [pdfProperty, setPdfProperty] = useState<Property | null>(null);
@@ -208,10 +208,10 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    if (!isUserLoading && (!currentUser || currentUser.uid !== adminUid)) {
+    if (!isUserLoading && (!currentUser || !isAdmin)) {
       router.push('/admin/login');
     }
-  }, [currentUser, isUserLoading, router]);
+  }, [currentUser, isUserLoading, router, isAdmin]);
 
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
