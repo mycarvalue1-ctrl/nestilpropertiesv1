@@ -11,12 +11,12 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Safely check for admin UID, ensuring user is signed in first.
+      // The user is an admin if they are signed in AND their UID matches the specific admin UID.
       return isSignedIn() && request.auth.uid == 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
     }
 
     function isOwner(ownerId) {
-      // Checks if the requesting user is the owner of the resource.
+      // The user is the owner of a document if they are signed in AND their UID matches the ownerId field.
       return isSignedIn() && request.auth.uid == ownerId;
     }
 
@@ -24,9 +24,13 @@ service cloud.firestore {
     // User Profile Rules
     // =================================
     match /users/{userId} {
+      // An admin can read/update any profile. A user can only read/update their own.
       allow read, update: if isOwner(userId) || isAdmin();
+      // A user can create their own user document.
       allow create: if isOwner(userId) && request.resource.data.id == userId;
+      // Only an admin can delete a user document.
       allow delete: if isAdmin();
+      // Only an admin can list all users.
       allow list: if isAdmin();
     }
 
@@ -34,7 +38,7 @@ service cloud.firestore {
     // Favorite Properties (Subcollection)
     // =================================
     match /users/{userId}/favorite_properties/{favoritePropertyId} {
-      // User can manage their own favorites, admin has full access to all favorites.
+      // A user can manage their own favorites. An admin has full access.
       allow read, write: if isOwner(userId) || isAdmin();
     }
 
@@ -42,20 +46,29 @@ service cloud.firestore {
     // Properties Collection Rules
     // =================================
     match /properties/{propertyId} {
-      // This rule gives admins full read/write access and stops further evaluation for them.
-      // This is the most important rule for the admin dashboard to function correctly.
+      // ADMIN OVERRIDE: If the user is an admin, grant full read/write access immediately.
+      // This is the most important rule for the admin dashboard to work correctly.
+      // The rules engine should stop evaluating further for an admin if this is true.
       allow read, write: if isAdmin();
 
-      // The following rules apply ONLY to non-admins.
+      // --- The following rules apply ONLY to NON-ADMIN users ---
+
+      // CREATE: A non-admin user can create a property if they are the owner.
       allow create: if !isAdmin() && isOwner(request.resource.data.ownerId);
+      
+      // UPDATE: A non-admin user can update a property they own.
       allow update: if !isAdmin() && isOwner(resource.data.ownerId);
+
+      // GET (Single Document): A non-admin can get a single document if it's approved, or if they own it.
       allow get: if !isAdmin() && (resource.data.isApproved == true || isOwner(resource.data.ownerId));
 
-      // For LIST operations, non-admins MUST provide a secure filter in their query.
-      // Rule 1: Allow listing of all publicly approved properties.
+      // LIST (Query): A non-admin user must provide a secure filter in their query.
+      // These two 'allow list' rules act as an OR condition.
+      
+      // Rule 1: Allow listing if the query filters for publicly approved properties.
       allow list: if !isAdmin() && request.query.where.get("isApproved") == true;
       
-      // Rule 2: Allow a user to list their OWN properties (for their dashboard).
+      // Rule 2: Allow listing if the query filters for the user's own properties.
       allow list: if !isAdmin() && request.query.where.get("ownerId") == request.auth.uid;
     }
 
@@ -64,15 +77,12 @@ service cloud.firestore {
     // Site Visit Rules
     // =================================
      match /site_visits/{visitId} {
-      // Allow read if admin, owner of the property, or the visitor who requested it.
+      // An admin, property owner, or visitor can read a visit request.
       allow read: if isAdmin() || isOwner(resource.data.ownerId) || isOwner(resource.data.visitorId);
-
-      // Allow update if admin or owner of the property.
+      // An admin or property owner can update the status (confirm/reject).
       allow update: if isAdmin() || isOwner(resource.data.ownerId);
-
-      // Allow create if the person creating it is the visitor.
+      // A visitor can create a request for themselves.
       allow create: if isOwner(request.resource.data.visitorId);
-
       // Deletion is disabled for record-keeping.
       allow delete: if false;
     }
@@ -81,13 +91,17 @@ service cloud.firestore {
     // Static Data Collections
     // =================================
     match /amenities/{amenityId} {
+      // Anyone can read the list of amenities.
       allow get, list: if true;
-      allow write: if isAdmin(); // create, update, delete
+      // Only admins can write to the list of amenities.
+      allow write: if isAdmin();
     }
 
     match /nearby_place_types/{nearbyPlaceTypeId} {
+      // Anyone can read the list of nearby place types.
       allow get, list: if true;
-      allow write: if isAdmin(); // create, update, delete
+      // Only admins can write to this list.
+      allow write: if isAdmin();
     }
   }
 }
