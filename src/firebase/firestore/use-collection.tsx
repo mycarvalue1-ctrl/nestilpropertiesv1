@@ -61,49 +61,48 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
-  const { user } = useUser();
-  const isAdmin = useMemo(() => user?.uid === 'IultEIQMgAUPwoqAEWX7ZIunjNB3', [user]);
-
-  const safeQuery = useMemo(() => {
-    if (!memoizedTargetRefOrQuery) {
-        return null;
-    }
-
-    // This is a robust check to determine if the query is targeting the 'properties' collection.
-    // It handles both raw CollectionReferences and more complex Query objects.
-    const path = (memoizedTargetRefOrQuery as InternalQuery)._query?.path?.canonicalString() ||
-                 (memoizedTargetRefOrQuery as CollectionReference).path;
-
-    const targetsProperties = path === 'properties';
-
-    // If the query targets 'properties' and the user is NOT an admin, we MUST enforce
-    // the 'isApproved' filter to comply with public access security rules.
-    if (targetsProperties && !isAdmin) {
-        return query(memoizedTargetRefOrQuery, where('isApproved', '==', true));
-    }
-    
-    // For admins or any other collection, use the original query.
-    return memoizedTargetRefOrQuery;
-
-  }, [memoizedTargetRefOrQuery, isAdmin]);
-
+  const { user, isUserLoading } = useUser();
 
   useEffect(() => {
-    if (!safeQuery) {
+    // Immediately exit if the query object isn't ready.
+    if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
       setError(null);
       return;
     }
 
+    // Crucially, wait until Firebase has resolved the auth state.
+    // This prevents queries from running with a temporary `auth: null` state
+    // if the user is actually logged in or during initial load.
+    if (isUserLoading) {
+      setIsLoading(true);
+      return;
+    }
+
+    // At this point, `isUserLoading` is false. We know who the user is (or isn't).
+    const isAdmin = user?.uid === 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
+    let effectiveQuery = memoizedTargetRefOrQuery;
+
+    // Determine if the query targets the 'properties' collection.
+    const path = (effectiveQuery as InternalQuery)._query?.path?.canonicalString() || (effectiveQuery as CollectionReference).path;
+    const targetsProperties = path === 'properties';
+
+    // If a NON-ADMIN is querying 'properties', we MUST enforce the public-access rule
+    // by adding the `isApproved` filter. This acts as a global safety net.
+    if (targetsProperties && !isAdmin) {
+      effectiveQuery = query(memoizedTargetRefOrQuery, where('isApproved', '==', true));
+    }
+
+    // Now, run the snapshot listener with the correctly filtered query.
     setIsLoading(true);
     setError(null);
 
     const unsubscribe = onSnapshot(
-      safeQuery,
+      effectiveQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
         const results: ResultItemType[] = [];
         for (const doc of snapshot.docs) {
@@ -113,30 +112,24 @@ export function useCollection<T = any>(
         setError(null);
         setIsLoading(false);
       },
-      (error: FirestoreError) => {
-        const path: string =
-          safeQuery.type === 'collection'
-            ? (safeQuery as CollectionReference).path
-            : (safeQuery as unknown as InternalQuery)._query.path.canonicalString()
-
+      (err: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path,
+          path: path,
         })
-
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
-
+        setError(contextualError);
+        setData(null);
+        setIsLoading(false);
         errorEmitter.emit('permission-error', contextualError);
       }
     );
 
     return () => unsubscribe();
-  }, [safeQuery]);
+  }, [memoizedTargetRefOrQuery, user, isUserLoading]); // Re-run when query, user, or loading state changes.
   
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
   }
+
   return { data, isLoading, error };
 }
