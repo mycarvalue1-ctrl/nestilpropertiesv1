@@ -217,7 +217,7 @@ export default function AdminPage() {
     if (!firestore || !isAdmin) return null;
     // This query now includes a `where` clause that will always be true,
     // which helps the Firestore security rules engine correctly validate the query for admins.
-    return query(collection(firestore, 'properties'), where('pincode', '!=', ''));
+    return query(collection(firestore, 'properties'), where('price', '>=', 0));
   }, [firestore, isAdmin]);
 
   const { data: allProperties, isLoading: propertiesLoading } = useCollection<Property>(propertiesQuery);
