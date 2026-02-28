@@ -68,7 +68,6 @@ export function useCollection<T = any>(
 
   useEffect(() => {
     // This is the critical guard. We must wait for Firebase to determine the auth state.
-    // If we are loading the user state, we should not proceed to make any queries.
     if (isUserLoading) {
       setIsLoading(true);
       return;
@@ -84,15 +83,14 @@ export function useCollection<T = any>(
     let effectiveQuery = memoizedTargetRefOrQuery;
     
     // START: SAFETY NET LOGIC
-    // We need to inspect the query to see if it's for the 'properties' collection.
-    const q = effectiveQuery as any;
-    const path = q.path || (q._query && q._query.path ? q._query.path.toString() : null);
-    
-    // If the user is NOT authenticated and the query is for the 'properties' collection...
+    // This safety net ensures that any query on the top-level 'properties' collection
+    // by a non-authenticated user is always filtered for public documents.
+    const internalQuery = (effectiveQuery as InternalQuery)._query;
+    const path = internalQuery?.path?.toString();
+
     if (path === 'properties' && !user) {
-        // ...we MUST enforce the security rule by adding the 'where' clause.
-        // This acts as a safety net for any component that forgets to add it.
-        effectiveQuery = query(effectiveQuery, where('isApproved', '==', true));
+      // Add the 'isApproved' filter to enforce security rules for public users.
+      effectiveQuery = query(effectiveQuery, where('isApproved', '==', true));
     }
     // END: SAFETY NET LOGIC
 
