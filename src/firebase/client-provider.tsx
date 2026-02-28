@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useMemo, type ReactNode } from 'react';
+import React, { useMemo, type ReactNode, useEffect } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
 import { initializeFirebase } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
@@ -13,6 +14,13 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     // Initialize Firebase on the client side, once per component mount.
     return initializeFirebase();
   }, []); // Empty dependency array ensures this runs only once on mount
+
+  useEffect(() => {
+    // This effect runs once when the app loads and logs out any existing user.
+    if (firebaseServices.auth) {
+      signOut(firebaseServices.auth);
+    }
+  }, [firebaseServices.auth]);
 
   return (
     <FirebaseProvider
