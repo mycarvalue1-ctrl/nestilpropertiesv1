@@ -41,7 +41,7 @@ service cloud.firestore {
     // Properties Collection Rules
     // =================================
     match /properties/{propertyId} {
-      // Admin has full access. This rule is checked first.
+      // Admin has full access. This rule is checked first and stops further evaluation for admins.
       allow read, write: if isAdmin();
 
       // --- Non-Admin Rules ---
@@ -55,12 +55,13 @@ service cloud.firestore {
       // Get (Single Document): Allow if not an admin AND (it's approved OR they are the owner).
       allow get: if !isAdmin() && (resource.data.isApproved == true || isOwner(resource.data.ownerId));
       
-      // List (Query):
-      // Rule 1: Allow public queries for approved properties. This fixes the homepage error.
-      allow list: if request.query.where.isApproved == true;
-      
-      // Rule 2: Allow authenticated users to query for their own properties.
-      allow list: if isSignedIn() && request.auth.uid == request.query.where.ownerId;
+      // List (Query): A single, combined rule for all non-admin list scenarios to remove ambiguity.
+      allow list: if !isAdmin() && (
+        // Case 1: Public can list approved properties (for homepage, search, etc.)
+        (request.query.where.isApproved == true) ||
+        // Case 2: A signed-in user can list their own properties (for "My Properties" dashboard)
+        (isSignedIn() && request.query.where.ownerId == request.auth.uid)
+      );
     }
 
 
