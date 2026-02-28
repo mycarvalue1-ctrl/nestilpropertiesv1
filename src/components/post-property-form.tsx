@@ -47,7 +47,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import ImageKit from 'imagekit-javascript';
 
 const amenitiesList = [
@@ -131,7 +131,7 @@ const FormSection = ({ title, description, children, className }: { title: strin
     </Card>
 );
 
-export function PostPropertyFormComponent() {
+export function PostPropertyFormComponent({ editId }: { editId: string | null }) {
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -141,7 +141,6 @@ export function PostPropertyFormComponent() {
   const firestore = useFirestore();
   const { user } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -259,7 +258,6 @@ export function PostPropertyFormComponent() {
   
   
   useEffect(() => {
-    const editId = searchParams.get('edit');
     if (editId && firestore && user) {
         setIsEditing(true);
         setPropertyId(editId);
@@ -322,7 +320,7 @@ export function PostPropertyFormComponent() {
         };
         fetchPropertyData();
     }
-  }, [searchParams, firestore, user, form, router, toast]);
+  }, [editId, firestore, user, form, router, toast]);
 
   const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
       e.preventDefault();
