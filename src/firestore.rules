@@ -48,17 +48,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       // READ Rules
-      
-      // Rule 1: Admins can read anything.
-      // This rule is checked first. If true, access is granted and other read rules are ignored.
-      allow read: if isAdmin();
-      
-      // Rule 2: For non-admins, they can get a document if they own it OR if it's approved.
-      allow get: if !isAdmin() && (isOwner(resource.data.ownerId) || resource.data.isApproved == true);
+      // A user can GET a document if they are an admin, the owner, or if the document is approved.
+      allow get: if isAdmin() || isOwner(resource.data.ownerId) || resource.data.isApproved == true;
 
-      // Rule 3: For non-admins, they can list documents ONLY if their query filters for approved properties.
-      // This is a crucial rule that allows public listing pages to work securely.
-      allow list: if !isAdmin() && request.query.where.get("isApproved") == true;
+      // A user can LIST documents if they are an admin (no query constraints needed),
+      // OR if their query is specifically filtering for approved properties.
+      allow list: if isAdmin() || (request.query.where.get("isApproved") == true);
     }
 
 

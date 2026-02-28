@@ -33,7 +33,7 @@ import { format, fromUnixTime } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { collection, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, doc, updateDoc, deleteDoc, query } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -215,9 +215,7 @@ export default function AdminPage() {
 
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
-    // Add a constraint to satisfy security rules for admins making unconstrained queries.
-    // This query will still return all documents since ownerId is always a non-empty string.
-    return query(collection(firestore, 'properties'), where('ownerId', '!=', ''));
+    return query(collection(firestore, 'properties'));
   }, [firestore, isAdmin]);
 
   const { data: allProperties, isLoading: propertiesLoading } = useCollection<Property>(propertiesQuery);
