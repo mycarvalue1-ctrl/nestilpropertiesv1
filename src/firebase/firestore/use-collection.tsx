@@ -8,8 +8,6 @@ import {
   FirestoreError,
   QuerySnapshot,
   CollectionReference,
-  query,
-  where,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -65,7 +63,7 @@ export function useCollection<T = any>(
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
-  const { user, isUserLoading } = useUser();
+  const { isUserLoading } = useUser();
 
   useEffect(() => {
     // This is the critical guard. We must wait for Firebase to determine the auth state.
@@ -81,18 +79,7 @@ export function useCollection<T = any>(
       return;
     }
     
-    let effectiveQuery = memoizedTargetRefOrQuery;
-    
-    // START: GLOBAL SAFETY NET
-    // This block acts as a safety net to prevent unfiltered queries on the 'properties'
-    // collection by unauthenticated users, which would violate security rules.
-    const internalQuery = (effectiveQuery as InternalQuery);
-    if (internalQuery?._query?.path?.segments?.[0] === 'properties' && !user) {
-        // For public users querying 'properties', we MUST enforce the security rule.
-        // We compose the existing query with the new security constraint.
-        effectiveQuery = query(effectiveQuery, where('isApproved', '==', true));
-    }
-    // END: GLOBAL SAFETY NET
+    const effectiveQuery = memoizedTargetRefOrQuery;
 
     setIsLoading(true);
     setError(null);
@@ -122,7 +109,7 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, user, isUserLoading]);
+  }, [memoizedTargetRefOrQuery, isUserLoading]);
   
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     throw new Error('useCollection query was not properly memoized using useMemoFirebase. This can lead to infinite loops.');

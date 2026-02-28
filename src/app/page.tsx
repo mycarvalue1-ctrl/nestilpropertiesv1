@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -28,6 +27,7 @@ export default function Home() {
   const recentPropertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
 
+    // This is the definitive fix: always filter for approved properties on the public homepage.
     return query(
       collection(firestore, 'properties'),
       where('isApproved', '==', true),
