@@ -51,14 +51,19 @@ service cloud.firestore {
       allow update: if isOwner(resource.data.ownerId) || isAdmin();
       allow delete: if isOwner(resource.data.ownerId) || isAdmin();
 
-      // --- READ Rules (Get, List) ---
+      // --- READ Rules (Get) ---
       // GET (Single Document): Allow if admin, owner, or the property is approved.
       allow get: if isAdmin() || isOwner(resource.data.ownerId) || resource.data.isApproved == true;
       
-      // LIST (Query): Use separate, non-conflicting rules for each scenario.
-      allow list: if isAdmin();
+      // --- LIST Rules (Query) ---
+      // Rule for public queries. MUST NOT require authentication.
       allow list: if request.query.where.get("isApproved") == true;
-      allow list: if isSignedIn() && request.query.where.get("ownerId") == request.auth.uid;
+
+      // Rule for authenticated user queries. MUST require authentication.
+      allow list: if isSignedIn() && (
+        isAdmin() || // Admins can list anything
+        request.query.where.get("ownerId") == request.auth.uid // Owners can list their own
+      );
     }
 
 
