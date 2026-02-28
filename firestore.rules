@@ -43,19 +43,15 @@ service cloud.firestore {
     // =================================
     match /properties/{propertyId} {
       // Admin Rules: Grant blanket read/write access to admins.
-      // This is checked first. Because it has no dependency on `resource.data`,
-      // it allows unfiltered list queries for admins.
       allow read, write: if isAdmin();
 
-      // User Rules: Apply only if the user is NOT an admin.
-      // GET: Allow reading a single document if it's approved OR if the user is the owner.
-      allow get: if !isAdmin() && (isOwner(resource.data.ownerId) || resource.data.isApproved == true);
-      
-      // LIST: Allow querying documents ONLY if they are approved.
-      // This forces all non-admin list queries to use `where('isApproved', '==', true)`.
-      allow list: if !isAdmin() && resource.data.isApproved == true;
+      // User Rules for Reading:
+      // Allow reading a document if it's approved OR if the user is the owner.
+      // This single rule covers both public listing queries and owners viewing their own properties.
+      allow read: if !isAdmin() && (isOwner(resource.data.ownerId) || resource.data.isApproved == true);
 
-      // WRITE for Users: Owners can create/update their own properties.
+      // User Rules for Writing:
+      // Owners can create/update their own properties.
       allow create: if !isAdmin() && isOwner(request.resource.data.ownerId);
       allow update: if !isAdmin() && isOwner(resource.data.ownerId);
     }
@@ -65,15 +61,17 @@ service cloud.firestore {
     // Site Visit Rules
     // =================================
      match /site_visits/{visitId} {
-      // Allow read/update if admin, owner, or visitor.
-      allow read, update: if isAdmin() || isOwner(resource.data.ownerId) || isOwner(resource.data.visitorId);
-      
-      // Separate list rule for queries
-      allow list: if isAdmin() || (isSignedIn() && request.query.get('ownerId') == request.auth.uid);
+      // Allow read if admin, owner of the property, or the visitor who requested it.
+      allow read: if isAdmin() || isOwner(resource.data.ownerId) || isOwner(resource.data.visitorId);
 
-      // Permissions for non-admins.
+      // Allow update if admin or owner of the property.
+      allow update: if isAdmin() || isOwner(resource.data.ownerId);
+
+      // Allow create if the person creating it is the visitor.
       allow create: if isOwner(request.resource.data.visitorId);
-      allow delete: if false; // Deletion is disabled for record-keeping.
+
+      // Deletion is disabled for record-keeping.
+      allow delete: if false;
     }
 
     // =================================
