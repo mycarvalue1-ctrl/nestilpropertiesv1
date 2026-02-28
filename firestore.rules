@@ -24,7 +24,6 @@ service cloud.firestore {
     // User Profile Rules
     // =================================
     match /users/{userId} {
-      // Admin has full CRUD access. Users can read/update their own profile.
       allow read, update: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow delete: if isAdmin();
@@ -43,20 +42,24 @@ service cloud.firestore {
     // Properties Collection Rules
     // =================================
     match /properties/{propertyId} {
-      // Combined read rule for all roles.
-      allow read: if
-        // Admins can read any document.
-        isAdmin() ||
-        // The owner of a property can always read their own document.
-        isOwner(resource.data.ownerId) ||
-        // Any user can read a property if it has been approved.
-        resource.data.isApproved == true;
+      // Admin Rules: Grant blanket read/write access to admins.
+      // This is checked first. Because it has no dependency on `resource.data`,
+      // it allows unfiltered list queries for admins.
+      allow read, write: if isAdmin();
 
-      // Write rules remain separate and more specific.
-      allow write: if isAdmin();
+      // User Rules: Apply only if the user is NOT an admin.
+      // GET: Allow reading a single document if it's approved OR if the user is the owner.
+      allow get: if !isAdmin() && (isOwner(resource.data.ownerId) || resource.data.isApproved == true);
+      
+      // LIST: Allow querying documents ONLY if they are approved.
+      // This forces all non-admin list queries to use `where('isApproved', '==', true)`.
+      allow list: if !isAdmin() && resource.data.isApproved == true;
+
+      // WRITE for Users: Owners can create/update their own properties.
       allow create: if !isAdmin() && isOwner(request.resource.data.ownerId);
       allow update: if !isAdmin() && isOwner(resource.data.ownerId);
     }
+
 
     // =================================
     // Site Visit Rules
@@ -64,7 +67,9 @@ service cloud.firestore {
      match /site_visits/{visitId} {
       // Allow read/update if admin, owner, or visitor.
       allow read, update: if isAdmin() || isOwner(resource.data.ownerId) || isOwner(resource.data.visitorId);
-      allow list: if isAdmin() || (isSignedIn() && request.query.where.ownerId == request.auth.uid);
+      
+      // Separate list rule for queries
+      allow list: if isAdmin() || (isSignedIn() && request.query.get('ownerId') == request.auth.uid);
 
       // Permissions for non-admins.
       allow create: if isOwner(request.resource.data.visitorId);
