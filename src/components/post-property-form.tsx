@@ -50,6 +50,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import ImageKit from 'imagekit-javascript';
+import { Skeleton } from './ui/skeleton';
 
 const amenitiesList = [
   'Balcony', 'Borewell Water', 'Car Parking', 'CCTV', 'Electricity', 'Gated Community', 
@@ -156,7 +157,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
   const [propertyId, setPropertyId] = useState<string | null>(null);
 
   const firestore = useFirestore();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -286,7 +287,17 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
     };
   }, [form, isEditing]);
   
-  
+    useEffect(() => {
+        if (!isUserLoading && !user) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Required',
+                description: 'You must be logged in to post or edit a property.',
+            });
+            router.push('/user-login');
+        }
+    }, [isUserLoading, user, router, toast]);
+
   useEffect(() => {
     if (editId && firestore && user) {
         setIsEditing(true);
@@ -570,6 +581,20 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
     const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
     window.open(url, '_blank');
   };
+
+    if (isUserLoading || !user) {
+        return (
+            <div className="container py-12 max-w-4xl mx-auto space-y-8">
+                <div className="text-center space-y-2">
+                    <Skeleton className="h-9 w-72 mx-auto" />
+                    <Skeleton className="h-5 w-96 mx-auto" />
+                </div>
+                <Skeleton className="h-96 w-full" />
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-80 w-full" />
+            </div>
+        );
+    }
 
   return (
     <div className="container py-12">
