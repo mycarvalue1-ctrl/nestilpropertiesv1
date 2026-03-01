@@ -1,9 +1,161 @@
+/**
+ * This ruleset enforces a security model for a real estate application based on
+ * user roles and strict data segregation. It prioritizes security and scalability
+ * by separating private, user-owned data from publicly accessible listings.
+ *
+ * Core Philosophy:
+ * The security model is built on the principle of least privilege. User access is
+ * determined by their role, which is verified by checking for the existence of a
+ * document in dedicated role collections (e.g., /roles_admin). This is more secure
+ * and performant than checking a field on a user profile.
+ *
+ * Data Structure:
+ * The data is organized into several top-level collections:
+ * - /users/{userId}: Private user profile data, only accessible by the owner.
+ * - /roles_admin, /roles_owner_agent: Manages user roles for authorization.
+ * - /user_properties/{ownerId}: A private space where property owners/agents create
+ *   and manage all their listings (drafts, pending, etc.).
+ * - /public_properties: A read-only collection for clients, containing only
+ *   admin-approved and active listings. This structural segregation is critical for
+ *   secure and performant public queries.
+ * - /amenities: A public, read-only list of property amenities.
+ *
+ * Key Security Decisions:
+ * - Role-Based Access via `exists()`: Instead of checking a 'role' field, we
+ *   use `exists()` calls on role-specific collections (`/roles_admin/{userId}`).
+ *   This provides a fast, secure, and atomic way to verify permissions.
+ * - Segregation for Public Queries: To safely allow listing properties, we use two
+ *   collections. `/user_properties` is private to the owner and admins. Approved
+ *   properties are copied (by a backend function) to `/public_properties`, which
+ *   is safe for public read and list operations. This avoids complex and insecure
+ *   query filtering in rules.
+ * - Client-Side Writes are Restricted: Clients cannot write directly to public
+ *   collections like `/public_properties` or `/amenities`, nor can they assign
+ *   roles. These operations are expected to be handled by trusted backend
+ *   processes (e.g., Cloud Functions) or administrators.
+ * - Default Deny: Any path not explicitly matched is inaccessible.
+ */
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    // Helper functions for readable and reusable logic
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+    function isOwnerAgent() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_owner_agent/$(request.auth.uid));
+    }
+
+    /**
+     * @description Controls access to user profile data.
+     * @path /users/{userId}
+     * @allow A user can create, read, and update their own profile document. (e.g., `(create) where userId == request.auth.uid`).
+     * @deny A user cannot read another user's profile or list all users. (e.g., `(get) /users/another_user_id`).
+     * @principle Restricts access to a user's own data tree and enforces self-creation.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId) && resource != null;
+
+      /**
+       * @description Controls access to a user's subcollection of favorite properties.
+       * @path /users/{userId}/favorite_properties/{propertyId}
+       * @allow A user can add, remove, and view properties in their own favorites list. (e.g., `(create) /users/my_user_id/favorite_properties/prop_123`).
+       * @deny A user cannot access another user's favorites. (e.g., `(list) /users/another_user_id/favorite_properties`).
+       * @principle Enforces ownership based on the hierarchical document path.
+       */
+      match /favorite_properties/{propertyId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if false;
+        allow delete: if isOwner(userId) && resource != null;
+      }
+    }
+
+    /**
+     * @description Secures the collection that grants Admin privileges.
+     * @path /roles_admin/{userId}
+     * @allow An existing Admin can see the list of other Admins for auditing. (e.g., `(get) where request.auth.uid is an Admin`).
+     * @deny Non-admins cannot read this collection. No client can write to it. (e.g., `(create)`).
+     * @principle Protects critical role-granting data from tampering by making it read-only for admins and denying all client writes.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Secures the collection that grants Owner/Agent privileges.
+     * @path /roles_owner_agent/{userId}
+     * @allow An Admin can see the list of Owner/Agents. (e.g., `(list) where request.auth.uid is an Admin`).
+     * @deny Non-admins cannot read this collection. No client can write to it. (e.g., `(create)`).
+     * @principle Protects role-granting data by restricting visibility to Admins and denying all client writes.
+     */
+    match /roles_owner_agent/{userId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Secures the private collection where agents manage all their properties (drafts, pending, etc.).
+     * @path /user_properties/{ownerId}/{propertyId}
+     * @allow An Owner/Agent can create a property under their own ID. An owner or an admin can view, update, and delete it. (e.g., `(create) where ownerId == request.auth.uid`).
+     * @deny A user cannot create a property for another user. (e.g., `(create) where ownerId != request.auth.uid`).
+     * @principle Enforces strict ownership for writes and validates relational integrity by ensuring the document's `ownerId` field matches the path.
+     */
+    match /user_properties/{ownerId}/{propertyId} {
+      allow get: if isOwner(ownerId) || isAdmin();
+      allow list: if isOwner(ownerId) || isAdmin();
+      allow create: if (isOwner(ownerId) && isOwnerAgent()) && request.resource.data.ownerId == ownerId;
+      allow update: if (isOwner(ownerId) || isAdmin()) && resource != null && request.resource.data.ownerId == resource.data.id;
+      allow delete: if (isOwner(ownerId) || isAdmin()) && resource != null;
+    }
+
+    /**
+     * @description Provides public, read-only access to approved property listings. This collection directly solves the "list properties" permission error.
+     * @path /public_properties/{propertyId}
+     * @allow Any authenticated user can read and list all approved properties. (e.g., `(list)` by any signed-in user).
+     * @deny No client-side writes are permitted; this collection is managed by backend functions. (e.g., `(create)`, `(update)`, `(delete)`).
+     * @principle Utilizes data segregation to provide a safe, publicly listable collection. All documents within are guaranteed to be public, satisfying Firestore's "queries are not filters" security model.
+     */
+    match /public_properties/{propertyId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Provides public, read-only access to the global list of amenities.
+     * @path /amenities/{amenityId}
+     * @allow Any authenticated user can read and list all available amenities. (e.g., `(list)`).
+     * @deny No client-side writes are permitted; this data is managed by admins. (e.g., `(create)`).
+     * @principle Protects global reference data by making it read-only for all clients.
+     */
+    match /amenities/{amenityId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }

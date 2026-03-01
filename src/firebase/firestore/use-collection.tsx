@@ -9,10 +9,8 @@ import {
   QuerySnapshot,
   CollectionReference,
 } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { useUser } from '@/firebase/provider';
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -35,7 +33,6 @@ export interface InternalQuery extends Query<DocumentData> {
     path: {
       canonicalString(): string;
       toString(): string;
-      segments: string[];
     }
   }
 }
@@ -61,32 +58,23 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
-  const { isUserLoading } = useUser();
-
   useEffect(() => {
-    // This is the critical guard. We must wait for Firebase to determine the auth state.
-    if (isUserLoading) {
-      setIsLoading(true);
-      return;
-    }
-
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
       setError(null);
       return;
     }
-    
-    const effectiveQuery = memoizedTargetRefOrQuery;
 
     setIsLoading(true);
     setError(null);
 
+    // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
     const unsubscribe = onSnapshot(
-      effectiveQuery,
+      memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
         const results: ResultItemType[] = [];
         for (const doc of snapshot.docs) {
@@ -96,40 +84,31 @@ export function useCollection<T = any>(
         setError(null);
         setIsLoading(false);
       },
-      (err: FirestoreError) => {
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
+      (error: FirestoreError) => {
+        // This logic extracts the path from either a ref or a query
+        const path: string =
+          memoizedTargetRefOrQuery.type === 'collection'
+            ? (memoizedTargetRefOrQuery as CollectionReference).path
+            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
 
-        // If a permission error occurs and the user is now logged out,
-        // we can assume it's a cleanup error from a previous subscription.
-        // We'll log a warning instead of throwing a fatal error.
-        if (err.code === 'permission-denied' && !currentUser) {
-          console.warn('A Firestore query failed after logout. This is often expected as old data listeners are cleaned up.');
-          setError(err); // Set local error state for debugging, but don't crash.
-          setData(null);
-          setIsLoading(false);
-          // Do NOT emit a global error in this case.
-          return;
-        }
-        
-        const path = (effectiveQuery as InternalQuery)._query?.path?.canonicalString() || (effectiveQuery as CollectionReference).path;
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: path,
+          path,
         })
-        setError(contextualError);
-        setData(null);
-        setIsLoading(false);
+
+        setError(contextualError)
+        setData(null)
+        setIsLoading(false)
+
+        // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
       }
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, isUserLoading]);
-  
+  }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error('useCollection query was not properly memoized using useMemoFirebase. This can lead to infinite loops.');
+    throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
   }
-
   return { data, isLoading, error };
 }
