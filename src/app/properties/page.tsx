@@ -39,14 +39,17 @@ function PropertyList() {
 
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
+    // Base query now filters for approved properties, as per security rules.
     return query(
-        collection(firestore, 'properties')
+        collection(firestore, 'properties'),
+        where('listingStatus', '==', 'approved')
     );
   }, [firestore]);
 
   const { data: serverFilteredProperties, isLoading: isLoadingProperties } = useCollection<Property>(propertiesQuery);
   
   const filteredAndSortedProperties = useMemo(() => {
+    // This block now filters on the pre-filtered 'approved' properties from Firestore.
     if (!serverFilteredProperties) return [];
 
     const types = searchParams.getAll('type');

@@ -60,6 +60,19 @@ service cloud.firestore {
         // on the client-side to get any results.
         allow list: if true;
     }
+    
+    // =================================
+    // Property Private Details Rules
+    // =================================
+    match /propertyPrivateDetails/{propertyId} {
+        // Only a logged-in user can read the contact details.
+        // The app logic (credits/subscription) should be handled on the client.
+        allow read: if isSignedIn();
+
+        // Only the actual property owner or an admin can create/edit/delete private details.
+        // We use get() to look up the ownerId from the main properties collection.
+        allow write: if (isOwner(get(/databases/$(database)/documents/properties/$(propertyId)).data.ownerId) || isAdmin());
+    }
 
 
     // =================================
