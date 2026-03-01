@@ -146,7 +146,7 @@ const PropertyPdfCard = ({ property, owner, innerRef }: { property: Property | n
 
 
 export default function AdminPage() {
-  const { user: currentUser } = useUser();
+  const { user: currentUser, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const isAdmin = currentUser?.email === 'helpnestil@gmail.com';
@@ -218,16 +218,16 @@ export default function AdminPage() {
   }
 
   const allPropertiesQuery = useMemoFirebase(() => {
-    if (!firestore || !isAdmin) return null;
+    if (!firestore || !isAdmin || isUserLoading) return null;
     return collection(firestore, 'properties');
-  }, [firestore, isAdmin]);
+  }, [firestore, isAdmin, isUserLoading]);
 
   const { data: allProperties, isLoading: propertiesLoading } = useCollection<Property>(allPropertiesQuery);
     
   const usersQuery = useMemoFirebase(() => {
-    if (!firestore || !isAdmin) return null;
+    if (!firestore || !isAdmin || isUserLoading) return null;
     return collection(firestore, 'users');
-  }, [firestore, isAdmin]);
+  }, [firestore, isAdmin, isUserLoading]);
   const { data: users, isLoading: usersLoading } = useCollection<AppUser>(usersQuery);
 
   const pendingProperties = useMemo(() => {

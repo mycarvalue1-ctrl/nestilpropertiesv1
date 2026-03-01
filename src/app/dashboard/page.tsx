@@ -10,13 +10,13 @@ import type { Property } from '@/lib/types';
 import { collection, query, where } from 'firebase/firestore';
 
 export default function DashboardPage() {
-  const { user } = useUser(); // Use the hook to get the logged-in user
+  const { user, isUserLoading } = useUser(); // Use the hook to get the logged-in user
   const firestore = useFirestore();
 
   const userPropertiesQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    if (!user || !firestore || isUserLoading) return null;
     return query(collection(firestore, 'properties'), where('ownerId', '==', user.uid));
-  }, [user, firestore]);
+  }, [user, firestore, isUserLoading]);
 
   const { data: userProperties, isLoading } = useCollection<Property>(userPropertiesQuery);
 

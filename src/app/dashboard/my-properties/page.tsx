@@ -135,7 +135,7 @@ function MyPropertiesSkeleton() {
 }
 
 export default function MyPropertiesPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -144,9 +144,9 @@ export default function MyPropertiesPage() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const userPropertiesQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    if (!user || !firestore || isUserLoading) return null;
     return query(collection(firestore, 'properties'), where('ownerId', '==', user.uid));
-  }, [user, firestore]);
+  }, [user, firestore, isUserLoading]);
 
   const { data: userProperties, isLoading } = useCollection<Property>(userPropertiesQuery);
 
