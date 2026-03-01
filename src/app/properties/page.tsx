@@ -20,7 +20,7 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where, orderBy, Query } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
 import { useFavorites } from '@/hooks/use-favorites';
 import Link from 'next/link';
@@ -29,49 +29,93 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 function PropertyList() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
   const { user } = useUser();
   const firestore = useFirestore();
   const { favoriteIds, toggleFavorite, isLoadingFavorites } = useFavorites();
   
   const [sortOption, setSortOption] = useState('newest');
 
+  const getQueryTypes = (types: string[]): string[] => {
+    if (types.length === 0) return [];
+    
+    const typeMapping: { [key: string]: string[] } = {
+        'apartment': ['1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Studio Apartment'],
+        'house': ['Independent House', 'Row House', 'Duplex'],
+        'villa': ['Villa'],
+        'plot': ['Plot'],
+        'land': ['Land', 'Agricultural Land'],
+        'commercial': ['Commercial'],
+        'pg': ['PG / Hostel'],
+    };
+
+    const queryTypes = types.flatMap(t => typeMapping[t.toLowerCase()] || [t]);
+    return [...new Set(queryTypes)];
+  }
+
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    // Base query now filters for approved properties, as per security rules.
-    return query(
-        collection(firestore, 'properties'),
-        where('isApproved', '==', true)
-    );
-  }, [firestore]);
+
+    let q: Query<Property> = query(collection(firestore, 'properties')) as Query<Property>;
+
+    // Base filter for security rules
+    q = query(q, where('isApproved', '==', true));
+
+    // Transaction filter
+    const transaction = searchParams.get('transaction');
+    if (transaction && transaction !== 'all') {
+      q = query(q, where('listingFor', '==', transaction));
+    }
+
+    // Type filter
+    const types = searchParams.getAll('type');
+    const queryTypes = getQueryTypes(types);
+    if (queryTypes.length > 0) {
+      q = query(q, where('propertyType', 'in', queryTypes));
+    }
+
+    // Price range filter
+    const minPrice = Number(searchParams.get('minPrice') || 0);
+    const maxPrice = Number(searchParams.get('maxPrice') || 50000000);
+    if (minPrice > 0) {
+      q = query(q, where('price', '>=', minPrice));
+    }
+    if (maxPrice < 50000000) {
+      q = query(q, where('price', '<=', maxPrice));
+    }
+    
+    // Sorting
+    switch (sortOption) {
+      case 'price_asc':
+        q = query(q, orderBy('price', 'asc'));
+        break;
+      case 'price_desc':
+        q = query(q, orderBy('price', 'desc'));
+        break;
+      case 'newest':
+      default:
+        // Note: if a price range filter is used, this may require a composite index in Firestore.
+        // The resulting Firestore error is informative and directs users to create it.
+        q = query(q, orderBy('dateAdded', 'desc'));
+        break;
+    }
+
+    return q;
+  }, [firestore, searchParams, sortOption]);
 
   const { data: serverFilteredProperties, isLoading: isLoadingProperties } = useCollection<Property>(propertiesQuery);
   
-  const filteredAndSortedProperties = useMemo(() => {
-    // This block now filters on the pre-filtered 'approved' properties from Firestore.
+  const clientSideFilteredProperties = useMemo(() => {
     if (!serverFilteredProperties) return [];
 
-    const types = searchParams.getAll('type');
-    const transaction = searchParams.get('transaction');
-    const minPrice = Number(searchParams.get('minPrice') || 0);
-    const maxPrice = Number(searchParams.get('maxPrice') || 50000000);
     const minSize = Number(searchParams.get('minSize') || 0);
     const maxSize = Number(searchParams.get('maxSize') || 10000);
     const keyword = searchParams.get('keyword')?.toLowerCase() || '';
 
-    let properties = serverFilteredProperties.filter(p => {
-        const typeLower = p.type?.toLowerCase() || '';
-        const typeMatch = types.length === 0 || types.some(filterType => {
-            const filterTypeLower = filterType.toLowerCase();
-            if (filterTypeLower === 'apartment') return typeLower.includes('flat') || typeLower.includes('apartment');
-            if (filterTypeLower === 'house') return typeLower.includes('house') || typeLower.includes('villa');
-            if (filterTypeLower === 'land') return typeLower.includes('land') || typeLower.includes('plot');
-            return typeLower.includes(filterTypeLower);
-        });
+    if (!keyword && minSize === 0 && maxSize === 10000) {
+        return serverFilteredProperties;
+    }
 
-        const transactionMatch = !transaction || transaction === 'all' || p.listingFor === transaction;
-        const priceMatch = p.price >= minPrice && p.price <= maxPrice;
+    return serverFilteredProperties.filter(p => {
         const sizeMatch = p.areaSqFt >= minSize && p.areaSqFt <= maxSize;
 
         const keywordMatch = !keyword || 
@@ -79,26 +123,10 @@ function PropertyList() {
                                 p.address.toLowerCase().includes(keyword) ||
                                 p.city.toLowerCase().includes(keyword);
 
-        return typeMatch && transactionMatch && priceMatch && sizeMatch && keywordMatch;
+        return sizeMatch && keywordMatch;
     });
 
-    // Sorting logic
-    switch (sortOption) {
-        case 'price_asc':
-            properties.sort((a, b) => a.price - b.price);
-            break;
-        case 'price_desc':
-            properties.sort((a, b) => b.price - a.price);
-            break;
-        case 'newest':
-        default:
-            properties.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime());
-            break;
-    }
-
-    return properties;
-
-  }, [serverFilteredProperties, searchParams, sortOption]);
+  }, [serverFilteredProperties, searchParams]);
 
   const isLoading = isLoadingFavorites || isLoadingProperties;
 
@@ -119,7 +147,7 @@ function PropertyList() {
   return (
     <div className="flex-1">
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-        <h2 className="text-xl font-semibold">{`Showing ${filteredAndSortedProperties.length} properties`}</h2>
+        <h2 className="text-xl font-semibold">{`Showing ${clientSideFilteredProperties.length} properties`}</h2>
         <Select value={sortOption} onValueChange={setSortOption}>
             <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Sort by" />
@@ -131,9 +159,9 @@ function PropertyList() {
             </SelectContent>
         </Select>
       </div>
-      {filteredAndSortedProperties.length > 0 ? (
+      {clientSideFilteredProperties.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {filteredAndSortedProperties.map((prop) => (
+          {clientSideFilteredProperties.map((prop) => (
             <PropertyCard 
               key={prop.id} 
               property={prop}
