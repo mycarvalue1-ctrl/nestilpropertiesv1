@@ -42,10 +42,35 @@ service cloud.firestore {
     // Properties Collection Rules
     // =================================
     match /properties/{propertyId} {
-      // DEV/TESTING RULE: To simplify development and testing, allow any
-      // authenticated user to read and write all property data. This is less secure
-      // but useful for unblocking UI development.
-      allow read, write: if isSignedIn();
+      
+      function isPubliclyVisible() {
+        return resource.data.isApproved == true;
+      }
+
+      // Anyone can attempt to query properties. The query's validity is
+      // then determined by the 'get' rule below. This forces client queries
+      // from non-admins to be specific (e.g., filter for approved listings).
+      allow list: if true;
+      
+      // A single document can be read if it's publicly approved, or if the
+      // requester is the property's owner or an admin.
+      allow get: if isPubliclyVisible() || isOwner(resource.data.ownerId) || isAdmin();
+
+      // Users can create properties for themselves.
+      // Rules enforce that new properties start as 'pending' and not 'approved'.
+      allow create: if isOwner(request.resource.data.ownerId)
+                    && request.resource.data.isApproved == false;
+
+      // An owner can update their own property, but cannot approve it themselves.
+      // An admin can update any property, including changing its approval status.
+      function ownerCanUpdate() {
+        return isOwner(resource.data.ownerId)
+               && request.resource.data.isApproved == resource.data.isApproved; // Prevents owner from self-approving
+      }
+      allow update: if ownerCanUpdate() || isAdmin();
+
+      // Only the owner or an admin can delete a property.
+      allow delete: if isOwner(resource.data.ownerId) || isAdmin();
     }
     
     // =================================

@@ -27,25 +27,16 @@ function RecentListings() {
   const { favoriteIds, toggleFavorite, isLoadingFavorites } = useFavorites();
 
   const recentPropertiesQuery = useMemoFirebase(() => {
-    if (isUserLoading || !firestore) {
-      return null; // Don't build query until auth state is known
-    }
-
-    const isAdmin = user?.email === 'helpnestil@gmail.com';
-    let q = query(
+    if (!firestore) return null;
+    
+    // Always query for approved properties on the public homepage
+    return query(
       collection(firestore, 'properties'),
+      where('isApproved', '==', true),
       orderBy('dateAdded', 'desc'),
       limit(6)
     );
-
-    // If user is not an admin (this includes logged-out users),
-    // they can only see approved properties.
-    if (!isAdmin) {
-      q = query(q, where('isApproved', '==', true));
-    }
-
-    return q;
-  }, [firestore, user, isUserLoading]); // Add isUserLoading dependency
+  }, [firestore]);
 
   const { data: recentProperties, isLoading: isLoadingProperties } = useCollection<Property>(recentPropertiesQuery);
   const isLoading = isLoadingFavorites || isLoadingProperties || isUserLoading;

@@ -55,13 +55,7 @@ function PropertyList() {
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
 
-    let q: Query<Property> = query(collection(firestore, 'properties')) as Query<Property>;
-    
-    const isAdmin = user?.email === 'helpnestil@gmail.com';
-    // Public users should only see approved properties
-    if (!isAdmin) {
-      q = query(q, where('isApproved', '==', true));
-    }
+    let q: Query<Property> = query(collection(firestore, 'properties'), where('isApproved', '==', true)) as Query<Property>;
 
     // Transaction filter
     const transaction = searchParams.get('transaction');
@@ -103,7 +97,7 @@ function PropertyList() {
     }
 
     return q;
-  }, [firestore, searchParams, sortOption, user]);
+  }, [firestore, searchParams, sortOption]);
 
   const { data: serverFilteredProperties, isLoading: isLoadingProperties } = useCollection<Property>(propertiesQuery);
   
