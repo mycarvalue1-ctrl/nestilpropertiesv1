@@ -533,16 +533,18 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
 
     if (isEditing && propertyId) {
       const userPropDocRef = doc(firestore, 'user_properties', user.uid, propertyId);
+      const publicPropRef = doc(firestore, 'public_properties', propertyId);
       batch.update(userPropDocRef, {
           ...userPropertyData,
           listingStatus: 'pending', // Reset status on edit to require re-approval
           isApproved: false,
       });
+      batch.delete(publicPropRef); // Remove from public view upon edit
 
       const privateDocRef = doc(firestore, 'propertyPrivateDetails', propertyId);
       batch.set(privateDocRef, privateDocData, { merge: true });
     } else {
-      const userPropsCollectionRef = collection(firestore, 'user_properties', user.uid);
+      const userPropsCollectionRef = collection(firestore, 'user_properties');
       const newUserPropDocRef = doc(userPropsCollectionRef); // Create a reference with a new ID
 
       batch.set(newUserPropDocRef, {
@@ -574,7 +576,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
       .catch((error) => {
         console.error('Error processing property: ', error);
         errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: isEditing && propertyId ? `user_properties/${user.uid}/${propertyId}` : `user_properties/${user.uid}`,
+          path: isEditing && propertyId ? `user_properties/${user.uid}/${propertyId}` : `user_properties`,
           operation: isEditing ? 'update' : 'create',
           requestResourceData: { ...userPropertyData, ...privateDocData },
         }));

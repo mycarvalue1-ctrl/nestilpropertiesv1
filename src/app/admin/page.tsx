@@ -32,7 +32,7 @@ import { format, fromUnixTime } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { collection, doc, updateDoc, deleteDoc, query, where, getDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, deleteDoc, query, where, getDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -219,16 +219,15 @@ export default function AdminPage() {
     }
   }
 
-  // Query for all properties, including pending, from user_properties (requires collection group query setup in Firestore)
-  // For now, we query `public_properties` and a separate query for `pending` as a workaround.
   const publicPropertiesQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
     return collection(firestore, 'public_properties');
   }, [firestore, isAdmin]);
 
-  // A separate query to find properties that are pending approval
   const pendingPropertiesQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
+    // This query now needs to be a collection group query to find pending properties across all users.
+    // Ensure you have a Firestore index for this: user_properties | listingStatus (asc)
     return query(collection(firestore, 'user_properties'), where('listingStatus', '==', 'pending'));
   }, [firestore, isAdmin]);
 
@@ -287,37 +286,73 @@ export default function AdminPage() {
   const usersCount = users?.length || 0;
   const propertiesCount = allProperties?.length || 0;
 
-  const handleApprove = (id: string, ownerId: string) => {
+  const handleApprove = async (id: string, ownerId: string) => {
     if (!firestore) return;
     setProcessingPropertyId(id);
-    const docRef = doc(firestore, 'user_properties', ownerId, id);
-    const data = { listingStatus: 'approved', isApproved: true };
-    updateDoc(docRef, data)
-        .then(() => toast({ title: "Property Approved", description: "The listing is now live." }))
-        .catch(error => {
-            console.error("Error approving property:", error);
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: docRef.path,
-                operation: 'update',
-                requestResourceData: data,
-            }));
-        })
-        .finally(() => setProcessingPropertyId(null));
+
+    const userPropRef = doc(firestore, 'user_properties', ownerId, id);
+    const publicPropRef = doc(firestore, 'public_properties', id);
+
+    try {
+      const propDocSnap = await getDoc(userPropRef);
+      if (!propDocSnap.exists()) {
+        throw new Error("Property document not found in user's collection.");
+      }
+
+      const propertyData = propDocSnap.data();
+      const batch = writeBatch(firestore);
+      
+      const publicData = {
+          ...propertyData,
+          listingStatus: 'approved',
+          isApproved: true,
+      };
+
+      // 1. Set the data in the public collection
+      batch.set(publicPropRef, publicData);
+
+      // 2. Update the status in the user's private collection
+      batch.update(userPropRef, {
+        listingStatus: 'approved',
+        isApproved: true,
+      });
+
+      await batch.commit();
+
+      toast({ title: "Property Approved", description: "The listing is now live." });
+
+    } catch (error: any) {
+      console.error("Error approving property:", error);
+      const permissionError = new FirestorePermissionError({
+        path: `user_properties/${ownerId}/${id} or public_properties/${id}`,
+        operation: 'write',
+        requestResourceData: { listingStatus: 'approved' },
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      toast({ variant: 'destructive', title: 'Approval Failed', description: error.message || "Could not approve property." });
+    } finally {
+      setProcessingPropertyId(null);
+    }
   };
 
   const handleReject = (id: string, ownerId: string) => {
     if (!firestore) return;
     setProcessingPropertyId(id);
-    const docRef = doc(firestore, 'user_properties', ownerId, id);
-    const data = { listingStatus: 'rejected', isApproved: false };
-    updateDoc(docRef, data)
+    const userPropRef = doc(firestore, 'user_properties', ownerId, id);
+    const publicPropRef = doc(firestore, 'public_properties', id);
+    const batch = writeBatch(firestore);
+
+    batch.update(userPropRef, { listingStatus: 'rejected', isApproved: false });
+    batch.delete(publicPropRef); // Remove from public view
+
+    batch.commit()
         .then(() => toast({ title: "Property Rejected" }))
         .catch(error => {
             console.error("Error rejecting property:", error);
             errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: docRef.path,
+                path: userPropRef.path,
                 operation: 'update',
-                requestResourceData: data,
+                requestResourceData: { listingStatus: 'rejected' },
             }));
         })
         .finally(() => setProcessingPropertyId(null));
@@ -362,16 +397,22 @@ export default function AdminPage() {
     if (!firestore) return;
     if (!window.confirm("Are you sure you want to archive this property? It will be hidden from public view but not permanently deleted.")) return;
     setProcessingPropertyId(propertyId);
-    const docRef = doc(firestore, 'user_properties', ownerId, propertyId);
-    const data = { listingStatus: 'archived' };
-    updateDoc(docRef, data)
-        .then(() => toast({ title: "Property Archived", description: "The property listing has been archived." }))
+    
+    const userPropRef = doc(firestore, 'user_properties', ownerId, propertyId);
+    const publicPropRef = doc(firestore, 'public_properties', propertyId);
+    const batch = writeBatch(firestore);
+
+    batch.update(userPropRef, { listingStatus: 'archived' });
+    batch.delete(publicPropRef); // Also delete from public
+
+    batch.commit()
+        .then(() => toast({ title: "Property Archived", description: "The property listing has been archived and removed from public view." }))
         .catch(error => {
             console.error("Error archiving property:", error);
             errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: docRef.path,
+                path: userPropRef.path,
                 operation: 'update',
-                requestResourceData: data,
+                requestResourceData: { listingStatus: 'archived' },
             }));
         })
         .finally(() => setProcessingPropertyId(null));
@@ -385,15 +426,21 @@ export default function AdminPage() {
       const isForRent = property.listingFor === 'Rent';
       const newStatus = currentStatus === 'sold' || currentStatus === 'rented' ? 'approved' : (isForRent ? 'rented' : 'sold');
       setProcessingPropertyId(propertyId);
-      const docRef = doc(firestore, 'user_properties', ownerId, propertyId);
+      const userPropRef = doc(firestore, 'user_properties', ownerId, propertyId);
+      const publicPropRef = doc(firestore, 'public_properties', propertyId);
       const data = { listingStatus: newStatus };
 
-      updateDoc(docRef, data)
+      const batch = writeBatch(firestore);
+      batch.update(userPropRef, data);
+      // set with merge will create it if it doesn't exist (e.g. was archived then marked available)
+      batch.set(publicPropRef, { ...property, ...data }, { merge: true });
+      
+      batch.commit()
         .then(() => toast({ title: "Status Updated", description: `Property marked as ${newStatus}.` }))
         .catch(error => {
             console.error("Error updating property status:", error);
             errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: docRef.path,
+                path: userPropRef.path,
                 operation: 'update',
                 requestResourceData: data,
             }));

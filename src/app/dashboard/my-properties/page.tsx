@@ -7,7 +7,7 @@ import { Edit, MoreVertical, Trash, EyeOff, Eye, LoaderCircle, Download, Buildin
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { collection, query, where, doc, deleteDoc, updateDoc, getDoc } from "firebase/firestore";
+import { collection, query, where, doc, deleteDoc, updateDoc, getDoc, writeBatch } from "firebase/firestore";
 import type { Property } from '@/lib/types';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRef, useState, useEffect } from "react";
@@ -147,7 +147,7 @@ export default function MyPropertiesPage() {
 
   const userPropertiesQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    return collection(firestore, 'user_properties', user.uid);
+    return query(collection(firestore, 'user_properties'), where('ownerId', '==', user.uid));
   }, [user, firestore]);
 
   const { data: userProperties, isLoading } = useCollection<Property>(userPropertiesQuery);
@@ -199,17 +199,18 @@ export default function MyPropertiesPage() {
     if (!firestore || !user) return;
     if (!window.confirm("Are you sure you want to permanently delete this property? This action cannot be undone.")) return;
 
-    // A user can only delete from their own user_properties collection.
-    // A Cloud Function would be needed to then delete the corresponding doc from public_properties.
     const userPropRef = doc(firestore, 'user_properties', user.uid, propertyId);
+    const publicPropRef = doc(firestore, 'public_properties', propertyId);
+    const privateDetailsRef = doc(firestore, 'propertyPrivateDetails', propertyId);
+    const batch = writeBatch(firestore);
+
+    batch.delete(userPropRef);
+    batch.delete(publicPropRef);
+    batch.delete(privateDetailsRef);
     
-    deleteDoc(userPropRef)
+    batch.commit()
       .then(() => {
-          // We can't delete from propertyPrivateDetails here if rules prevent it,
-          // but we attempt it. This should also be handled by a Cloud Function.
-          const privateDocRef = doc(firestore, 'propertyPrivateDetails', propertyId);
-          deleteDoc(privateDocRef);
-          toast({ title: "Property Deleted", description: "The property has been removed from your listings." });
+          toast({ title: "Property Deleted", description: "The property has been permanently removed." });
       })
       .catch((error) => {
         console.error("Error deleting property:", error);
@@ -226,9 +227,14 @@ export default function MyPropertiesPage() {
       const isRentedOrSold = property.listingStatus === 'sold' || property.listingStatus === 'rented';
       const newStatus = isRentedOrSold ? 'approved' : (property.listingFor === 'Rent' ? 'rented' : 'sold');
       const docRef = doc(firestore, 'user_properties', user.uid, property.id);
+      const publicDocRef = doc(firestore, 'public_properties', property.id);
       const data = { listingStatus: newStatus };
       
-      updateDoc(docRef, data)
+      const batch = writeBatch(firestore);
+      batch.update(docRef, data);
+      batch.update(publicDocRef, data); // Also update public status
+
+      batch.commit()
         .then(() => toast({ title: "Status Updated", description: `Property marked as ${newStatus}.` }))
         .catch((error) => {
           console.error("Error updating status:", error);
