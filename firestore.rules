@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -14,9 +15,9 @@ service cloud.firestore {
 
     // Rules for the 'properties' collection
     match /properties/{propertyId} {
-      // ANYONE can read properties. Client-side queries must filter for isApproved == true for public pages.
+      // ANY authenticated user (including anonymous) can read properties.
       // This approach is robust and prevents auth-related race conditions for public data.
-      allow read: if true;
+      allow get, list: if request.auth != null;
 
       // An authenticated user can create a property for themselves.
       // Rule enforces that the ownerId in the document matches the user's UID and the property starts as unapproved.
