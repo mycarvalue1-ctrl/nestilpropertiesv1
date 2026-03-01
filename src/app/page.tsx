@@ -23,7 +23,8 @@ import { useFavorites } from '@/hooks/use-favorites';
 
 function LoggedInHome() {
   const firestore = useFirestore();
-  const { favoriteIds, toggleFavorite } = useFavorites();
+  const { user } = useUser();
+  const { favoriteIds, toggleFavorite, isLoadingFavorites } = useFavorites();
 
   const recentPropertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -37,6 +38,7 @@ function LoggedInHome() {
   }, [firestore]);
 
   const { data: recentProperties, isLoading: isLoadingProperties } = useCollection<Property>(recentPropertiesQuery);
+  const isLoading = isLoadingFavorites || isLoadingProperties;
 
   return (
       <section className="py-16 md:py-24 bg-background">
@@ -52,7 +54,7 @@ function LoggedInHome() {
             </div>
           </div>
           
-          {isLoadingProperties ? (
+          {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => <PropertyCardSkeleton key={i} />)}
             </div>
@@ -63,8 +65,8 @@ function LoggedInHome() {
                   <PropertyCard
                     key={prop.id}
                     property={prop}
-                    isFavorited={favoriteIds.has(prop.id)}
-                    onToggleFavorite={() => toggleFavorite(prop.id, favoriteIds.has(prop.id))}
+                    isFavorited={user ? favoriteIds.has(prop.id) : false}
+                    onToggleFavorite={user ? () => toggleFavorite(prop.id, favoriteIds.has(prop.id)) : undefined}
                   />
                 ))}
               </div>
@@ -81,33 +83,8 @@ function LoggedInHome() {
   )
 }
 
-function LoggedOutHome() {
-  return (
-     <section className="py-16 md:py-24 bg-background">
-        <div className="container">
-            <div className="text-center py-16 border-dashed border-2 rounded-lg">
-                <LogIn className="mx-auto h-12 w-12 text-primary mb-4" />
-                <h2 className="text-2xl font-bold">Welcome to Nestil</h2>
-                <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-                    Please log in or create an account to view property listings, save your favorites, and connect with owners.
-                </p>
-                <div className="mt-6 flex justify-center gap-4">
-                    <Button asChild>
-                    <Link href="/user-login">Login</Link>
-                    </Button>
-                    <Button asChild variant="outline">
-                    <Link href="/signup">Sign Up</Link>
-                    </Button>
-              </div>
-            </div>
-        </div>
-      </section>
-  )
-}
-
 
 export default function Home() {
-  const { user, isUserLoading } = useUser();
   const [shuffledLocalAreas, setShuffledLocalAreas] = useState<any[]>([]);
 
   useEffect(() => {
@@ -123,24 +100,6 @@ export default function Home() {
 
     setShuffledLocalAreas(allLocalAreas.slice(0, 10));
   }, []); // Empty dependency array ensures this runs once on the client after mount.
-      
-  const renderContent = () => {
-    if (isUserLoading) {
-      return (
-         <section className="py-16 md:py-24 bg-background">
-            <div className="container">
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(6)].map((_, i) => <PropertyCardSkeleton key={i} />)}
-              </div>
-            </div>
-        </section>
-      );
-    }
-    if (user) {
-      return <LoggedInHome />;
-    }
-    return <LoggedOutHome />;
-  }
 
   return (
     <>
@@ -180,7 +139,7 @@ export default function Home() {
         </div>
       </section>
 
-      {renderContent()}
+      <LoggedInHome />
 
       <section className="py-16 md:py-24 bg-secondary/50">
         <div className="container">

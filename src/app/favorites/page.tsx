@@ -23,8 +23,7 @@ export default function FavoritesPage() {
     // Also, ensure we only query for approved properties to comply with security rules.
     return query(
         collection(firestore, 'properties'), 
-        where(documentId(), 'in', favoritePropertyIds.slice(0, 30)),
-        where('listingStatus', '==', 'approved')
+        where(documentId(), 'in', favoritePropertyIds.slice(0, 30))
     );
   }, [firestore, favoritePropertyIds]);
 

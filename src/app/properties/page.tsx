@@ -29,20 +29,19 @@ import Link from 'next/link';
 function PropertyList() {
   const searchParams = useSearchParams();
   const types = searchParams.getAll('type');
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const firestore = useFirestore();
-  const { favoriteIds, toggleFavorite } = useFavorites();
+  const { favoriteIds, toggleFavorite, isLoadingFavorites } = useFavorites();
 
   const propertiesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null; // Only query if user is logged in
+    if (!firestore) return null;
 
-    const q = collection(firestore, 'properties');
-    const constraints: any[] = [
+    return query(
+        collection(firestore, 'properties'), 
+        where('listingStatus', '==', 'approved'),
         orderBy('dateAdded', 'desc')
-    ];
-
-    return query(q, ...constraints);
-  }, [firestore, user]);
+    );
+  }, [firestore]);
 
   const { data: serverFilteredProperties, isLoading: isLoadingProperties } = useCollection<Property>(propertiesQuery);
   
@@ -71,7 +70,7 @@ function PropertyList() {
     });
   }, [serverFilteredProperties, types]);
 
-  const isLoading = isUserLoading || (user && isLoadingProperties);
+  const isLoading = isLoadingFavorites || isLoadingProperties;
 
   if (isLoading) {
     return (
@@ -86,28 +85,6 @@ function PropertyList() {
     );
   }
 
-  if (!user) {
-    return (
-        <div className="flex-1">
-            <div className="text-center py-16 border-dashed border-2 rounded-lg mt-4">
-                <LogIn className="mx-auto h-12 w-12 text-primary mb-4" />
-                <h2 className="text-2xl font-bold">Please Log In</h2>
-                <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-                    You need to be logged in to view property listings.
-                </p>
-                <div className="mt-6 flex justify-center gap-4">
-                    <Button asChild>
-                    <Link href="/user-login">Login</Link>
-                    </Button>
-                    <Button asChild variant="outline">
-                    <Link href="/signup">Sign Up</Link>
-                    </Button>
-                </div>
-            </div>
-        </div>
-    )
-  }
-
   return (
     <div className="flex-1">
       <div className="flex justify-between items-center mb-4">
@@ -119,8 +96,8 @@ function PropertyList() {
             <PropertyCard 
               key={prop.id} 
               property={prop}
-              isFavorited={favoriteIds.has(prop.id)}
-              onToggleFavorite={() => toggleFavorite(prop.id, favoriteIds.has(prop.id))}
+              isFavorited={user ? favoriteIds.has(prop.id) : false}
+              onToggleFavorite={user ? () => toggleFavorite(prop.id, favoriteIds.has(prop.id)) : undefined}
             />
           ))}
         </div>
