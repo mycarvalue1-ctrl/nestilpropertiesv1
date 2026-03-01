@@ -19,14 +19,14 @@ export default function FavoritesPage() {
   const favoritePropertyIds = useMemo(() => Array.from(favoriteIds), [favoriteIds]);
 
   const favPropertiesQuery = useMemoFirebase(() => {
-    if (!firestore || favoritePropertyIds.length === 0) return null;
+    if (!firestore || isUserLoading || favoritePropertyIds.length === 0) return null;
     
     // Firestore 'in' query is limited to 30 elements at a time.
     return query(
         collection(firestore, 'properties'), 
         where(documentId(), 'in', favoritePropertyIds.slice(0, 30))
     );
-  }, [firestore, favoritePropertyIds]);
+  }, [firestore, favoritePropertyIds, isUserLoading]);
 
   const { data: favoriteProperties, isLoading: isLoadingProperties } = useCollection<Property>(favPropertiesQuery);
 

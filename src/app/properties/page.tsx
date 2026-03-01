@@ -29,7 +29,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 function PropertyList() {
   const searchParams = useSearchParams();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { favoriteIds, toggleFavorite, isLoadingFavorites } = useFavorites();
   
@@ -53,7 +53,7 @@ function PropertyList() {
   }
 
   const propertiesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || isUserLoading) return null;
 
     let q: Query<Property> = query(collection(firestore, 'properties'), where('isApproved', '==', true)) as Query<Property>;
 
@@ -95,7 +95,7 @@ function PropertyList() {
     }
 
     return q;
-  }, [firestore, searchParams, sortOption]);
+  }, [firestore, searchParams, sortOption, isUserLoading]);
 
   const { data: serverFilteredProperties, isLoading: isLoadingProperties } = useCollection<Property>(propertiesQuery);
   
@@ -123,7 +123,7 @@ function PropertyList() {
 
   }, [serverFilteredProperties, searchParams]);
 
-  const isLoading = isLoadingFavorites || isLoadingProperties;
+  const isLoading = isLoadingFavorites || isLoadingProperties || isUserLoading;
 
   if (isLoading) {
     return (

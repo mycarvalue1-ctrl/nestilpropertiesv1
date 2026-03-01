@@ -27,7 +27,7 @@ function RecentListings() {
   const { favoriteIds, toggleFavorite, isLoadingFavorites } = useFavorites();
 
   const recentPropertiesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || isUserLoading) return null;
     
     return query(
       collection(firestore, 'properties'),
@@ -35,7 +35,7 @@ function RecentListings() {
       orderBy('dateAdded', 'desc'),
       limit(6)
     );
-  }, [firestore]);
+  }, [firestore, isUserLoading]);
 
   const { data: recentProperties, isLoading: isLoadingProperties } = useCollection<Property>(recentPropertiesQuery);
   const isLoading = isLoadingFavorites || isLoadingProperties || isUserLoading;
