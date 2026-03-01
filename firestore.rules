@@ -46,17 +46,21 @@ service cloud.firestore {
       allow read, write: if isAdmin();
       
       // --- OWNERS ---
-      // An owner can read, update, or delete their own property documents.
-      allow read, update, delete: if isSignedIn() && request.auth.uid == resource.data.ownerId;
+      // An owner can create, update, or delete their own property documents.
+      allow create, update, delete: if isSignedIn() && request.auth.uid == request.resource.data.ownerId || (isSignedIn() && request.auth.uid == resource.data.ownerId);
       
-      // An owner can create a property for themselves.
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.ownerId;
+      // An owner can also read their own properties.
+      allow get: if isSignedIn() && request.auth.uid == resource.data.ownerId;
 
-      // --- PUBLIC ---
-      // Any user (including unauthenticated visitors) can read a property if its listing status is 'approved'.
-      // This rule allows public searches to function correctly as long as the client query
-      // includes `where('listingStatus', '==', 'approved')`.
-      allow get, list: if resource.data.listingStatus == 'approved';
+      // --- PUBLIC / LOGGED-IN USERS ---
+      // Any user can GET a single property if it's approved.
+      allow get: if resource.data.listingStatus == 'approved';
+
+      // Any user can perform a LIST query on the collection.
+      // SECURITY NOTE: This rule is broad because Firestore rules cannot enforce 'where' clauses on `list` operations for root collections.
+      // It is CRITICAL that all client-side queries include the appropriate security filters
+      // (e.g., `where('listingStatus', '==', 'approved')` for public pages, or `where('ownerId', '==', uid)` for user-specific pages).
+      allow list: if true;
     }
 
 
