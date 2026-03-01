@@ -368,16 +368,11 @@ export default function PropertyDetailPage() {
                         <CardTitle>Location</CardTitle>
                     </CardHeader>
                     <CardContent>
-                         <div className="relative">
-                            <Image src="https://picsum.photos/seed/map/800/600" alt="Map location" width={800} height={600} className="w-full rounded-lg brightness-50" data-ai-hint="city map"/>
-                            <div className="absolute inset-0 flex items-center justify-center rounded-lg">
-                                <Button asChild variant="secondary" size="lg">
-                                    <a href={mapUrl} target="_blank" rel="noopener noreferrer">
-                                        <MapPin className="mr-2 h-4 w-4" /> View on Google Maps
-                                    </a>
-                                </Button>
-                            </div>
-                         </div>
+                        <Button asChild variant="outline" size="lg" className="w-full">
+                            <a href={mapUrl} target="_blank" rel="noopener noreferrer">
+                                <MapPin className="mr-2 h-4 w-4" /> View on Google Maps
+                            </a>
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
