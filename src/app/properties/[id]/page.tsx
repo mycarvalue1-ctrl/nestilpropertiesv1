@@ -83,7 +83,7 @@ export default function PropertyDetailPage() {
   const { toast } = useToast();
   const router = useRouter();
   
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const firestore = useFirestore();
 
   const propertyRef = useMemoFirebase(() => {
@@ -110,17 +110,6 @@ export default function PropertyDetailPage() {
       message: "",
     },
   });
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to view property details.",
-        variant: "destructive",
-      });
-      router.push('/user-login');
-    }
-  }, [user, isUserLoading, router, toast]);
 
   const handleShowContact = async () => {
     if (!user) {
@@ -205,6 +194,7 @@ export default function PropertyDetailPage() {
   async function onScheduleVisit(values: z.infer<typeof visitSchema>) {
     if (!user || !firestore || !property) {
         toast({ variant: "destructive", title: "Error", description: "You must be logged in to schedule a visit." });
+        router.push('/user-login');
         return;
     }
 
@@ -237,12 +227,12 @@ export default function PropertyDetailPage() {
   }
 
 
-  if (isUserLoading || isPropertyLoading) {
+  if (isPropertyLoading) {
     return <PropertyDetailSkeleton />;
   }
 
-  if (!user || !property) {
-    return <PropertyDetailSkeleton />;
+  if (!property) {
+    notFound();
   }
 
   const propertyPhotos = (property.photos && property.photos.length > 0) ? property.photos : ['https://picsum.photos/seed/property/800/600'];
@@ -323,6 +313,9 @@ export default function PropertyDetailPage() {
                                     <span>{amenity}</span>
                                 </div>
                             ))}
+                             {(property.amenities || []).length === 0 && (
+                                <p className="text-muted-foreground text-sm col-span-full">No amenities listed.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -369,7 +362,7 @@ export default function PropertyDetailPage() {
                     <CardHeader className="bg-secondary rounded-t-lg">
                         <div className="flex justify-between items-center">
                             <div>
-                                <p className="text-secondary-foreground text-sm">{property.status}</p>
+                                <p className="text-secondary-foreground text-sm">{property.listingFor === 'Rent' ? 'For Rent' : 'For Sale'}</p>
                                 <p className="text-3xl font-bold text-primary">₹{(property.price || 0).toLocaleString('en-IN')}</p>
                             </div>
                             <Badge variant="default">{property.type}</Badge>
@@ -379,8 +372,8 @@ export default function PropertyDetailPage() {
                        <div className="flex justify-around items-center text-center flex-wrap gap-x-4 gap-y-6">
                           <div>
                             <BedDouble className="h-6 w-6 mx-auto text-primary" />
-                            <p className="font-bold">{property.beds || 'N/A'}</p>
-                            <p className="text-xs text-muted-foreground">Beds</p>
+                            <p className="font-bold">{property.bhk || 'N/A'}</p>
+                            <p className="text-xs text-muted-foreground">BHK</p>
                           </div>
                           <div>
                             <Bath className="h-6 w-6 mx-auto text-primary" />
@@ -417,11 +410,120 @@ export default function PropertyDetailPage() {
                                 <CardTitle>Interested?</CardTitle>
                                 <p className="text-muted-foreground">Reveal owner details to contact them directly or schedule a visit.</p>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="space-y-3">
                                 <Button onClick={handleShowContact} className="w-full" size="lg">
                                     <Eye className="mr-2 h-5 w-5" />
                                     Show Contact Info
                                 </Button>
+                                <Dialog open={isVisitDialogOpen} onOpenChange={setIsVisitDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" className="w-full" size="lg">
+                                            <CalendarIcon className="mr-2 h-5 w-5" /> Schedule Visit
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Schedule a Site Visit</DialogTitle>
+                                            <DialogDescription>
+                                                Request an appointment to see this property.
+                                                {property.visitAvailability && (
+                                                    <p className="mt-2 text-sm text-foreground bg-secondary/50 p-2 rounded-md">
+                                                        <strong>Owner's Availability:</strong> {property.visitAvailability}
+                                                    </p>
+                                                )}
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <Form {...visitForm}>
+                                            <form onSubmit={visitForm.handleSubmit(onScheduleVisit)} className="space-y-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <FormField
+                                                        control={visitForm.control}
+                                                        name="visitDate"
+                                                        render={({ field }) => (
+                                                        <FormItem className="flex flex-col">
+                                                            <FormLabel>Date</FormLabel>
+                                                            <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <FormControl>
+                                                                <Button
+                                                                    variant={"outline"}
+                                                                    className={cn(
+                                                                    "pl-3 text-left font-normal",
+                                                                    !field.value && "text-muted-foreground"
+                                                                    )}
+                                                                >
+                                                                    {field.value ? (
+                                                                    format(field.value, "PPP")
+                                                                    ) : (
+                                                                    <span>Pick a date</span>
+                                                                    )}
+                                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                                </Button>
+                                                                </FormControl>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0" align="start">
+                                                                <Calendar
+                                                                    mode="single"
+                                                                    selected={field.value}
+                                                                    onSelect={field.onChange}
+                                                                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                                                                    initialFocus
+                                                                />
+                                                            </PopoverContent>
+                                                            </Popover>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                        )}
+                                                    />
+                                                     <FormField
+                                                        control={visitForm.control}
+                                                        name="visitTime"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                            <FormLabel>Time Slot</FormLabel>
+                                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                                <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select a time" />
+                                                                </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent>
+                                                                {timeSlots.map(time => (
+                                                                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                                                                ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                        />
+                                                </div>
+                                                 <FormField
+                                                    control={visitForm.control}
+                                                    name="message"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                        <FormLabel>Message (Optional)</FormLabel>
+                                                        <FormControl>
+                                                            <Textarea
+                                                            placeholder="Any specific questions or requests?"
+                                                            {...field}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                    />
+                                                <DialogFooter>
+                                                    <Button type="submit" disabled={visitForm.formState.isSubmitting}>
+                                                        {visitForm.formState.isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                                        Send Request
+                                                    </Button>
+                                                </DialogFooter>
+                                            </form>
+                                        </Form>
+                                    </DialogContent>
+                                </Dialog>
                             </CardContent>
                         </>
                     ) : (
