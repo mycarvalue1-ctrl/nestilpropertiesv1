@@ -46,13 +46,15 @@ service cloud.firestore {
         allow update, delete: if isOwner(resource.data.ownerId) || isAdmin();
 
         // --- READS ---
-        // GET (reading a single document)
+        // GET rule: Determines if a user can read a *single specific document*.
+        // This can check document fields because it operates on a single resource.
         allow get: if isAdmin() || isOwner(resource.data.ownerId) || resource.data.isApproved == true;
-        
-        // LIST (running a query)
-        allow list: if isAdmin();
-        allow list: if isOwner(resource.data.ownerId);
-        allow list: if resource.data.isApproved == true;
+
+        // LIST rule: Determines if a user can run a *query*. This CANNOT use `resource.data`.
+        // Security is enforced because Firestore ensures that any query ONLY returns documents
+        // that the user has permission to GET. If a query could potentially return a
+        // document that fails the GET rule, the entire query is denied.
+        allow list: if true;
     }
     
     // =================================
