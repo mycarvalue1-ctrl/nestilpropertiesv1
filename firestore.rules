@@ -15,9 +15,9 @@ service cloud.firestore {
 
     // Rules for the 'properties' collection
     match /properties/{propertyId} {
-      // ANY authenticated user (including anonymous) can read properties.
-      // This approach is robust and prevents auth-related race conditions for public data.
-      allow get, list: if request.auth != null;
+      // ANYONE can read properties. This is the most open rule possible and
+      // is necessary to allow public listing pages to work without auth errors.
+      allow get, list: if true;
 
       // An authenticated user can create a property for themselves.
       // Rule enforces that the ownerId in the document matches the user's UID and the property starts as unapproved.
@@ -35,9 +35,8 @@ service cloud.firestore {
 
     // Rules for the 'propertyPrivateDetails' collection
     match /propertyPrivateDetails/{propertyId} {
-      // Any authenticated user can read the private details (like phone number).
-      // This is necessary for the property detail page to function for logged-in users.
-      allow read: if request.auth != null;
+      // Only the property owner or an admin can read the private details.
+      allow read: if isOwner(resource.data.ownerId) || isAdmin();
 
       // Only the property owner or an admin can create or update the private details.
       allow write: if isOwner(request.resource.data.ownerId) || isAdmin();
