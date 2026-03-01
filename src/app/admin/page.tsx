@@ -1,7 +1,6 @@
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -149,8 +148,7 @@ const PropertyPdfCard = ({ property, owner, innerRef }: { property: Property | n
 
 
 export default function AdminPage() {
-  const { user: currentUser, isUserLoading } = useUser();
-  const router = useRouter();
+  const { user: currentUser } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   
@@ -223,12 +221,6 @@ export default function AdminPage() {
     }
   }
 
-  useEffect(() => {
-    if (!isUserLoading && (!currentUser || !isAdmin)) {
-      router.push('/admin/login');
-    }
-  }, [currentUser, isUserLoading, router, isAdmin]);
-
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
     return collection(firestore, 'properties');
@@ -267,20 +259,8 @@ export default function AdminPage() {
     });
   }, [allProperties, propertySearch, propertyStatusFilter, propertyTypeFilter]);
   
-  if (isUserLoading || !isAdmin || propertiesLoading || usersLoading) {
-    if (isUserLoading || propertiesLoading || usersLoading) {
+  if (propertiesLoading || usersLoading) {
       return <AdminSkeleton />;
-    }
-    return (
-      <div className="container py-12 flex items-center justify-center">
-        <Alert variant="destructive" className="max-w-lg">
-          <AlertTitle>Access Denied</AlertTitle>
-          <AlertDescription>
-            You do not have permission to view this page. This area is for administrators only.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
   }
 
   const pendingProperties = allProperties?.filter((p) => p.listingStatus === "pending") || [];
