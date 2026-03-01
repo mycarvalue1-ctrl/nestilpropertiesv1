@@ -2,14 +2,44 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-    // =====================================================================
-    // TEMPORARY DEBUGGING RULE
-    // This is intentionally insecure to diagnose a permissions issue.
-    // It allows anyone to read or write any document in the database.
-    // =====================================================================
-    match /{document=**} {
-      allow read, write: if true;
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'helpnestil@gmail.com';
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if request.resource.data.id == request.auth.uid;
+      allow update, delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/favorite_properties/{propertyId} {
+      allow read, create, delete: if isOwner(userId);
+    }
+    
+    match /properties/{propertyId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(resource.data.ownerId) || isAdmin();
+    }
+
+    match /propertyPrivateDetails/{propertyId} {
+      // Allow read only if owner or admin. Client logic handles credit-based access.
+      allow read: if isOwner(resource.data.ownerId) || isAdmin();
+      allow create, update, delete: if isOwner(resource.data.ownerId) || isAdmin();
+    }
+    
+    match /site_visits/{visitId} {
+      allow create: if isSignedIn();
+      allow read, update: if isOwner(resource.data.ownerId) || isOwner(resource.data.visitorId) || isAdmin();
     }
   }
 }

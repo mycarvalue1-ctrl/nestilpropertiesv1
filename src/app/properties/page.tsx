@@ -53,7 +53,7 @@ function PropertyList() {
   }
 
   const propertiesQuery = useMemoFirebase(() => {
-    if (!firestore || isUserLoading) return null;
+    if (!firestore) return null;
 
     let q: Query<Property> = query(collection(firestore, 'properties'), where('isApproved', '==', true)) as Query<Property>;
 
@@ -95,7 +95,7 @@ function PropertyList() {
     }
 
     return q;
-  }, [firestore, searchParams, sortOption, isUserLoading]);
+  }, [firestore, searchParams, sortOption]);
 
   const { data: serverFilteredProperties, isLoading: isLoadingProperties } = useCollection<Property>(propertiesQuery);
   
