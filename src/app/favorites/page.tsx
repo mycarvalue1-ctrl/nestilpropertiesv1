@@ -23,7 +23,8 @@ export default function FavoritesPage() {
     // Also, ensure we only query for approved properties to comply with security rules.
     return query(
         collection(firestore, 'properties'), 
-        where(documentId(), 'in', favoritePropertyIds.slice(0, 30))
+        where(documentId(), 'in', favoritePropertyIds.slice(0, 30)),
+        where('listingStatus', '==', 'approved')
     );
   }, [firestore, favoritePropertyIds]);
 
@@ -32,15 +33,11 @@ export default function FavoritesPage() {
   const isLoading = isLoadingFavorites || (favoritePropertyIds.length > 0 && isLoadingProperties !== false);
 
   if (!user) {
-    // Or a better UI for non-logged in users
     return (
       <div className="container py-12">
         <div className="text-center py-16 border-dashed border-2 rounded-lg">
             <h2 className="text-xl font-semibold">Please log in to see your favorites.</h2>
-            <p className="text-muted-foreground mt-2">Create an account or log in to start saving properties.</p>
-            <Button asChild className="mt-4">
-              <Link href="/user-login">Login</Link>
-            </Button>
+            <p className="text-muted-foreground mt-2">Login is currently disabled. You cannot view favorites at this time.</p>
         </div>
       </div>
     );

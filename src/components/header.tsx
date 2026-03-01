@@ -30,7 +30,6 @@ import { signOut } from 'firebase/auth';
 const navLinks = [
   { href: '/properties?status=For+Rent', label: 'Rent' },
   { href: '/properties?status=For+Sale', label: 'Buy' },
-  { href: '/post-property', label: 'Sell' },
 ];
 
 export function Header() {
@@ -45,17 +44,14 @@ export function Header() {
     if (auth) {
       await signOut(auth);
     }
-    router.push('/login');
+    router.push('/');
   };
 
   const adminUid = 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
   const isAdmin = currentUser?.uid === adminUid;
 
   // Create a specific list for the mobile menu to avoid duplicate keys.
-  const mobileNavLinks = [
-    ...navLinks.filter(link => link.href !== '/post-property'),
-    { href: '/post-property', label: 'Post Property' }
-  ];
+  const mobileNavLinks = [...navLinks];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -93,9 +89,7 @@ export function Header() {
             <Search className="h-5 w-5" />
           </Button>
 
-          <Button asChild variant="accent" className="hidden sm:inline-flex">
-            <Link href="/post-property">Post Property</Link>
-          </Button>
+          {/* Post Property button is removed */}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -127,10 +121,9 @@ export function Header() {
                 </>
               ) : (
                 <>
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild><Link href="/login">Login</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link href="/signup">Sign Up</Link></DropdownMenuItem>
+                  <DropdownMenuItem disabled>Login/Signup Disabled</DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>
@@ -171,6 +164,9 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
+                <div className="border-t pt-4 mt-4">
+                    <p className="p-2 text-lg font-medium text-foreground/60">Login/Signup Disabled</p>
+                </div>
               </div>
             </SheetContent>
           </Sheet>

@@ -116,11 +116,10 @@ export default function PropertyDetailPage() {
   const handleShowContact = async () => {
     if (!user) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to view contact details.",
+        title: "Login Required",
+        description: "Login is currently disabled. This feature is unavailable.",
         variant: "destructive",
       });
-      router.push('/user-login');
       return;
     }
 
@@ -202,8 +201,11 @@ export default function PropertyDetailPage() {
 
   async function onScheduleVisit(values: z.infer<typeof visitSchema>) {
     if (!user || !firestore || !property) {
-        toast({ variant: "destructive", title: "Error", description: "You must be logged in to schedule a visit." });
-        router.push('/user-login');
+        toast({
+            variant: "destructive",
+            title: "Login Required",
+            description: "Login is currently disabled, so you cannot schedule a visit.",
+        });
         return;
     }
 
