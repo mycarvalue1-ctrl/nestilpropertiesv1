@@ -14,6 +14,7 @@ export type Property = {
   status: 'For Sale' | 'For Rent' | 'For Lease';
   type: string;
   price: number;
+  priceOnRequest?: boolean;
   areaSqFt: number;
   address: string;
   city: string;
@@ -42,7 +43,7 @@ export type Property = {
   // Fields from form that were missing
   ownerId: string;
   postedByType: 'Owner' | 'Agent' | 'Builder';
-  listingFor: 'Rent' | 'Sale' | 'Lease';
+  listingFor: 'Rent' | 'Sale' | 'Lease' | 'PG';
   negotiable?: boolean;
   maintenance?: number;
   deposit?: number;

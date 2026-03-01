@@ -58,15 +58,15 @@ const amenitiesList = [
 
 const propertyTypes = [
     '1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 
-    'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel', 'Land'
+    'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel', 'Land', 'Plot', 'Commercial', 'Agricultural Land'
 ];
-const residentialTypes = ['1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 'Villa', 'Row House', 'Duplex', 'Studio Apartment'];
+const residentialTypes = ['1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel'];
 
 
 // Zod schema for form validation
 const formSchema = z.object({
   propertyType: z.string({ required_error: "Property type is required." }).min(1, "Property type is required."),
-  listingFor: z.enum(['Rent', 'Sale', 'Lease'], { required_error: "Please select a listing type." }),
+  listingFor: z.enum(['Rent', 'Sale', 'Lease', 'PG'], { required_error: "Please select a listing type." }),
   title: z.string().min(10, "Title must be at least 10 characters.").max(100),
   title_te: z.string().optional(),
   description: z.string().min(50, "Description must be at least 50 characters."),
@@ -78,7 +78,8 @@ const formSchema = z.object({
   pincode: z.string().length(6, "Pincode must be 6 digits."),
   googleMapsLink: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   
-  price: z.coerce.number({ required_error: 'Price is required.' }).min(1, "Price must be a positive number."),
+  price: z.coerce.number({ required_error: 'Price is required.' }).min(0, "Price cannot be negative."),
+  priceOnRequest: z.boolean().default(false),
   negotiable: z.enum(['Yes', 'No']),
   maintenance: z.coerce.number().optional().default(0),
   deposit: z.coerce.number().optional().default(0),
@@ -118,6 +119,21 @@ const formSchema = z.object({
       message: 'A positive deposit amount is required for rentals.',
       path: ['deposit'],
     });
+  }
+  if (!data.priceOnRequest && data.price <= 0) {
+      ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Price must be a positive number if "Price on Request" is not selected.',
+          path: ['price'],
+      });
+  }
+  const totalPhotos = (data.existingPhotos?.length || 0) + (data.photos?.length || 0);
+  if (totalPhotos < 3) {
+      ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please upload at least 3 photos.',
+          path: ['photos'],
+      });
   }
 });
 
@@ -160,6 +176,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
       pincode: '',
       googleMapsLink: '',
       price: 0,
+      priceOnRequest: false,
       negotiable: 'No',
       maintenance: 0,
       deposit: 0,
@@ -194,6 +211,18 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
   const propertyType = useWatch({ control: form.control, name: 'propertyType' });
   const watchedCity = useWatch({ control: form.control, name: 'city' });
   const watchedLocality = useWatch({ control: form.control, name: 'locality' });
+  const watchedPrice = useWatch({ control: form.control, name: 'price' });
+  const watchedArea = useWatch({ control: form.control, name: 'details.area' });
+  const watchedPlotArea = useWatch({ control: form.control, name: 'details.plotArea' });
+  const priceOnRequest = useWatch({ control: form.control, name: 'priceOnRequest' });
+
+  const pricePerSqFt = useMemo(() => {
+      const area = watchedArea > 0 ? watchedArea : watchedPlotArea;
+      if (area > 0 && watchedPrice > 0) {
+          return (watchedPrice / area).toFixed(2);
+      }
+      return '0.00';
+  }, [watchedPrice, watchedArea, watchedPlotArea]);
 
 
   // This new effect syncs the form's location TO the global state (localStorage)
@@ -298,6 +327,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                     pincode: data.pincode,
                     googleMapsLink: data.googleMapsLink,
                     price: data.price,
+                    priceOnRequest: data.priceOnRequest || false,
                     negotiable: data.negotiable ? 'Yes' : 'No',
                     maintenance: data.maintenance,
                     deposit: data.deposit,
@@ -449,7 +479,8 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
         address: values.locality,
         pincode: values.pincode,
         googleMapsLink: values.googleMapsLink,
-        price: values.price,
+        price: values.priceOnRequest ? 0 : values.price,
+        priceOnRequest: values.priceOnRequest,
         negotiable: values.negotiable === 'Yes',
         maintenance: values.maintenance,
         deposit: values.deposit,
@@ -579,7 +610,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                     <FormLabel>Listing For</FormLabel>
                     <FormControl>
                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex items-center space-x-4 pt-2">
-                           {['Sale', 'Rent', 'Lease'].map(type => (
+                           {['Sale', 'Rent', 'Lease', 'PG'].map(type => (
                              <FormItem key={type} className="flex items-center space-x-2 space-y-0">
                                 <FormControl><RadioGroupItem value={type} id={`listing-${type}`} /></FormControl>
                                 <Label htmlFor={`listing-${type}`}>{type}</Label>
@@ -667,25 +698,41 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
           </FormSection>
 
           <FormSection title="Price & Availability">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
                     <FormField control={form.control} name="price" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Expected Price / Monthly Rent (₹)</FormLabel>
-                            <FormControl><Input type="number" placeholder="e.g., 4500000" {...field} /></FormControl>
+                            <FormControl><Input type="number" placeholder="e.g., 4500000" {...field} disabled={priceOnRequest} /></FormControl>
+                            {!priceOnRequest && (
+                                <FormDescription>
+                                    Price per Sq.Ft: ₹{pricePerSqFt}
+                                </FormDescription>
+                            )}
                              <FormMessage />
                         </FormItem>
                     )} />
-                     <FormField control={form.control} name="negotiable" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Negotiable?</FormLabel>
-                             <FormControl>
-                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex items-center space-x-4 pt-2">
-                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Yes" id="neg-yes" /></FormControl><Label htmlFor="neg-yes">Yes</Label></FormItem>
-                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="No" id="neg-no" /></FormControl><Label htmlFor="neg-no">No</Label></FormItem>
-                                </RadioGroup>
-                            </FormControl>
-                        </FormItem>
-                    )} />
+                    <div className="space-y-4">
+                        <FormField control={form.control} name="priceOnRequest" render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm h-[68px]">
+                                <div className="space-y-0.5">
+                                    <FormLabel>Price on Request</FormLabel>
+                                    <FormDescription className="text-xs">Hide price from public view</FormDescription>
+                                </div>
+                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange}/></FormControl>
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="negotiable" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Negotiable?</FormLabel>
+                                <FormControl>
+                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex items-center space-x-4 pt-2">
+                                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Yes" id="neg-yes" /></FormControl><Label htmlFor="neg-yes">Yes</Label></FormItem>
+                                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="No" id="neg-no" /></FormControl><Label htmlFor="neg-no">No</Label></FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                            </FormItem>
+                        )} />
+                    </div>
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="maintenance" render={({ field }) => (
@@ -753,7 +800,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
             <FormSection title="Property Details">
               <div className="space-y-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  { !propertyType.includes('BHK') && propertyType !== 'Studio Apartment' && (
+                  { !propertyType.includes('BHK') && propertyType !== 'Studio Apartment' && propertyType !== 'PG / Hostel' && (
                     <FormField control={form.control} name="details.bhk" render={({ field }) => (<FormItem><FormLabel>BHK</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Beds"/></SelectTrigger></FormControl><SelectContent>{['1', '2', '3', '4+'].map(v => <SelectItem key={v} value={`${v} BHK`}>{v} BHK</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                   )}
                   <FormField control={form.control} name="details.bathrooms" render={({ field }) => (<FormItem><FormLabel>Bathrooms</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Baths"/></SelectTrigger></FormControl><SelectContent>{['1', '2', '3', '4+'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
@@ -761,7 +808,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                   <FormField control={form.control} name="details.totalFloors" render={({ field }) => (<FormItem><FormLabel>Total Floors</FormLabel><FormControl><Input placeholder="e.g., 5" {...field}/></FormControl><FormMessage /></FormItem>)} />
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                     <FormField control={form.control} name="details.area" render={({ field }) => (<FormItem><FormLabel>Built-up Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="e.g., 1200" {...field}/></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="details.area" render={({ field }) => (<FormItem><FormLabel>Built-up Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="e.g., 1200" {...field}/></FormControl><FormDescription>Area in Square Feet.</FormDescription><FormMessage /></FormItem>)} />
                      <FormField control={form.control} name="details.facing" render={({ field }) => (<FormItem><FormLabel>Facing</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select direction"/></SelectTrigger></FormControl><SelectContent>{['East', 'West', 'North', 'South', 'North-East', 'North-West', 'South-East', 'South-West'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                      <FormField control={form.control} name="details.age" render={({ field }) => (<FormItem><FormLabel>Age of Property</FormLabel><FormControl><Input placeholder="e.g., 2 years" {...field}/></FormControl><FormMessage /></FormItem>)} />
                  </div>
@@ -769,6 +816,26 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
               </div>
             </FormSection>
           )}
+
+          {propertyType && ['Land', 'Plot', 'Agricultural Land'].includes(propertyType) && (
+              <FormSection title="Land / Plot Details">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <FormField control={form.control} name="details.plotArea" render={({ field }) => (<FormItem><FormLabel>Plot Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="e.g., 2400" {...field}/></FormControl><FormDescription>1 Sq Yard = 9 Sq Ft</FormDescription><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="details.roadWidth" render={({ field }) => (<FormItem><FormLabel>Road Width (ft)</FormLabel><FormControl><Input type="number" placeholder="e.g., 30" {...field}/></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="details.approved" render={({ field }) => (<FormItem><FormLabel>Layout Approved?</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex items-center space-x-4 pt-2">{['Yes', 'No'].map(type => (<FormItem key={type} className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value={type} id={`approved-${type}`} /></FormControl><Label htmlFor={`approved-${type}`}>{type}</Label></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} />
+                  </div>
+              </FormSection>
+          )}
+
+          {propertyType && propertyType === 'Commercial' && (
+              <FormSection title="Commercial Property Details">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField control={form.control} name="details.area" render={({ field }) => (<FormItem><FormLabel>Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="e.g., 3000" {...field}/></FormControl><FormDescription>Total area in Square Feet.</FormDescription><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="details.facing" render={({ field }) => (<FormItem><FormLabel>Facing</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select direction"/></SelectTrigger></FormControl><SelectContent>{['East', 'West', 'North', 'South', 'North-East', 'North-West', 'South-East', 'South-West'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                  </div>
+              </FormSection>
+          )}
+
 
           <FormSection title="Amenities" description="Select all the amenities available at your property.">
             <FormField
