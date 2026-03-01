@@ -41,23 +41,27 @@ service cloud.firestore {
     // Properties Collection Rules (Public Data)
     // =================================
     match /properties/{propertyId} {
-      // --- READS ---
-      // Anyone can GET a document if it's approved. Owners/Admins can get their own regardless of status.
-      allow get: if resource.data.listingStatus == 'approved' 
-                  || (isSignedIn() && resource.data.ownerId == request.auth.uid)
-                  || isAdmin();
-
-      // Anyone can LIST approved properties.
-      // Client queries MUST include `where('listingStatus', '==', 'approved')` for public users.
-      // This rule works in tandem with the 'get' rule, which is checked on every doc in the result set.
-      allow list: if true;
-
       // --- WRITES ---
       // Only signed-in users can create a property, and they must be the owner.
       allow create: if isOwner(request.resource.data.ownerId);
 
       // Only the property owner or an admin can update or delete.
       allow update, delete: if isOwner(resource.data.ownerId) || isAdmin();
+
+      // --- READS ---
+      // The `get` rule is the gatekeeper for all reads.
+      // It ensures that for any query, only approved properties are returned to the client,
+      // unless the user is the owner or an admin.
+      allow get: if resource.data.listingStatus == 'approved' 
+                  || (isSignedIn() && resource.data.ownerId == request.auth.uid)
+                  || isAdmin();
+
+      // The `list` rule allows anyone to construct a query.
+      // However, the `get` rule above is checked on every single document
+      // before it's returned, effectively filtering the results on the backend.
+      // This means any public query MUST use `where('listingStatus', '==', 'approved')`
+      // on the client-side to get any results.
+      allow list: if true;
     }
     
     // =================================
