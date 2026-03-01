@@ -246,7 +246,14 @@ export default function PropertyDetailPage() {
   }
 
   if (!property) {
-    notFound();
+    return (
+        <div className="container py-10">
+          <h1 className="text-2xl font-bold">Property Not Found</h1>
+          <p className="text-muted-foreground mt-2">
+            The property with ID "{params.id}" could not be loaded. It may have been removed, or there was an issue retrieving the data.
+          </p>
+        </div>
+    );
   }
 
   const propertyPhotos = (property.photos && property.photos.length > 0) ? property.photos : ['https://picsum.photos/seed/property/800/600'];
@@ -684,5 +691,3 @@ export default function PropertyDetailPage() {
     </div>
   );
 }
-
-    
