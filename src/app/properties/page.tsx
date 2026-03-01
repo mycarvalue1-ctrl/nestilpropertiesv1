@@ -42,7 +42,7 @@ function PropertyList() {
     // Base query now filters for approved properties, as per security rules.
     return query(
         collection(firestore, 'properties'),
-        where('listingStatus', '==', 'approved')
+        where('isApproved', '==', true)
     );
   }, [firestore]);
 

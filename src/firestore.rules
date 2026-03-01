@@ -46,19 +46,15 @@ service cloud.firestore {
         allow update, delete: if isOwner(resource.data.ownerId) || isAdmin();
 
         // --- READS ---
-        // The `get` rule is the gatekeeper for all reads.
-        // It ensures that for any query, only approved properties are returned to the client,
-        // unless the user is the owner or an admin.
-        allow get: if resource.data.listingStatus == 'approved' 
-                    || (isSignedIn() && resource.data.ownerId == request.auth.uid)
-                    || isAdmin();
+        // Admin can read all properties. This allows unfiltered list queries.
+        allow read: if isAdmin();
+        
+        // The owner of a property can read it.
+        allow read: if isOwner(resource.data.ownerId);
 
-        // The `list` rule allows anyone to construct a query.
-        // However, the `get` rule above is checked on every single document
-        // before it's returned, effectively filtering the results on the backend.
-        // This means any public query MUST use `where('listingStatus', '==', 'approved')`
-        // on the client-side to get any results.
-        allow list: if true;
+        // Public users can only read approved properties.
+        // This requires public client queries to filter for `listingStatus == 'approved'`.
+        allow read: if resource.data.isApproved == true;
     }
     
     // =================================
