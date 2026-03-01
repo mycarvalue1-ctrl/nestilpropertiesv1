@@ -2,7 +2,7 @@
 
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LoaderCircle } from 'lucide-react';
 
 export default function AdminLayout({
@@ -12,17 +12,24 @@ export default function AdminLayout({
 }) {
   const { user: currentUser, isUserLoading } = useUser();
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const adminEmail = 'helpnestil@gmail.com';
   
-  const isAdmin = useMemo(() => currentUser?.email === adminEmail, [currentUser]);
-
   useEffect(() => {
-    if (!isUserLoading && !isAdmin) {
-      router.push('/admin/login');
+    if (isUserLoading) {
+      return; // Wait for user status to be determined
     }
-  }, [isUserLoading, isAdmin, router]);
 
-  if (isUserLoading || !isAdmin) {
+    const isAdmin = currentUser?.email === adminEmail;
+    
+    if (isAdmin) {
+      setIsAuthorized(true);
+    } else {
+      router.replace('/admin/login');
+    }
+  }, [isUserLoading, currentUser, router, adminEmail]);
+
+  if (!isAuthorized) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
