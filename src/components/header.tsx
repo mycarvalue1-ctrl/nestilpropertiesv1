@@ -1,7 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, User, Coins } from 'lucide-react';
+import { Menu, Search, User, Coins, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -17,6 +18,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -26,11 +29,9 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
+import { useTranslation } from '@/hooks/use-translation';
+import { useLanguage } from '@/context/language-context';
 
-const navLinks = [
-  { href: '/properties?status=For+Rent', label: 'Rent' },
-  { href: '/properties?status=For+Sale', label: 'Buy' },
-];
 
 export function Header() {
   const pathname = usePathname();
@@ -39,6 +40,13 @@ export function Header() {
   
   const { user: currentUser, isUserLoading } = useUser();
   const auth = useAuth();
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguage();
+
+  const navLinks = [
+    { href: '/properties?status=For+Rent', label: t('rent') },
+    { href: '/properties?status=For+Sale', label: t('buy') },
+  ];
   
   const handleLogout = async () => {
     if (auth) {
@@ -65,7 +73,7 @@ export function Header() {
         <div className="ml-6 hidden lg:flex items-center w-full max-w-md">
             <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search for properties..." className="pl-10"/>
+                <Input placeholder={t('search_properties')} className="pl-10"/>
             </div>
         </div>
 
@@ -85,6 +93,20 @@ export function Header() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-2">
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Globe className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Language</DropdownMenuLabel>
+              <DropdownMenuRadioGroup value={language} onValueChange={(value) => setLanguage(value as 'en' | 'te')}>
+                <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="te">తెలుగు</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsSearchOpen(true)}>
             <Search className="h-5 w-5" />
           </Button>
@@ -175,3 +197,5 @@ export function Header() {
     </header>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -67,7 +68,9 @@ const formSchema = z.object({
   propertyType: z.string({ required_error: "Property type is required." }).min(1, "Property type is required."),
   listingFor: z.enum(['Rent', 'Sale', 'Lease'], { required_error: "Please select a listing type." }),
   title: z.string().min(10, "Title must be at least 10 characters.").max(100),
+  title_te: z.string().optional(),
   description: z.string().min(50, "Description must be at least 50 characters."),
+  description_te: z.string().optional(),
   
   state: z.string().optional(),
   city: z.string({ required_error: "City is required." }).min(1, "City is required."),
@@ -148,7 +151,9 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
       propertyType: '',
       listingFor: 'Rent',
       title: '',
+      title_te: '',
       description: '',
+      description_te: '',
       state: 'Andhra Pradesh',
       city: '',
       locality: '',
@@ -284,7 +289,9 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                     propertyType: data.propertyType,
                     listingFor: data.listingFor,
                     title: data.title,
+                    title_te: data.title_te,
                     description: data.description,
+                    description_te: data.description_te,
                     state: data.state || 'Andhra Pradesh',
                     city: data.city,
                     locality: data.address, // map address back to locality
@@ -431,7 +438,9 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
 
       const publicDocData = {
         title: values.title,
+        title_te: values.title_te,
         description: values.description,
+        description_te: values.description_te,
         propertyType: values.propertyType,
         type: values.propertyType,
         listingFor: values.listingFor,
@@ -589,10 +598,24 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                     <FormMessage />
                   </FormItem>
               )} />
+               <FormField control={form.control} name="title_te" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Property Title (Telugu)</FormLabel>
+                    <FormControl><Input placeholder="e.g., బస్ స్టాండ్ దగ్గర 2BHK ఇల్లు" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+              )} />
               <FormField control={form.control} name="description" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl><Textarea placeholder="Describe your property in detail..." rows={5} {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+              )} />
+               <FormField control={form.control} name="description_te" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (Telugu)</FormLabel>
+                    <FormControl><Textarea placeholder="మీ ఆస్తిని వివరంగా వివరించండి..." rows={5} {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
               )} />
@@ -976,3 +999,5 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
     </div>
   );
 }
+
+    
