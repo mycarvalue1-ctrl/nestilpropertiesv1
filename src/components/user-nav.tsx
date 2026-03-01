@@ -84,7 +84,7 @@ export function UserNav() {
         <DropdownMenuSeparator />
         {!user.emailVerified && (
           <>
-            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={handleResendVerification}>
+            <DropdownMenuItem className="cursor-pointer" onClick={handleResendVerification}>
               <MailWarning className="mr-2 h-4 w-4" />
               <span>Verify Email</span>
             </DropdownMenuItem>
