@@ -46,15 +46,13 @@ service cloud.firestore {
         allow update, delete: if isOwner(resource.data.ownerId) || isAdmin();
 
         // --- READS ---
-        // Admin can read all properties. This allows unfiltered list queries.
-        allow read: if isAdmin();
+        // GET (reading a single document)
+        allow get: if isAdmin() || isOwner(resource.data.ownerId) || resource.data.isApproved == true;
         
-        // The owner of a property can read it.
-        allow read: if isOwner(resource.data.ownerId);
-
-        // Public users can only read approved properties.
-        // This requires public client queries to filter for `listingStatus == 'approved'`.
-        allow read: if resource.data.isApproved == true;
+        // LIST (running a query)
+        allow list: if isAdmin();
+        allow list: if isOwner(resource.data.ownerId);
+        allow list: if resource.data.isApproved == true;
     }
     
     // =================================
