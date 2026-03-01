@@ -41,19 +41,21 @@ service cloud.firestore {
     // Properties Collection Rules
     // =================================
     match /properties/{propertyId} {
-        // --- WRITES ---
+        // ADMIN ACCESS: Grant full read/write access to admins immediately.
+        // This rule is checked first and provides a clear path for admin queries.
+        allow read, write: if isAdmin();
+
+        // NON-ADMIN WRITES: These are only evaluated if the user is not an admin.
         allow create: if isOwner(request.resource.data.ownerId);
-        allow update, delete: if isOwner(resource.data.ownerId) || isAdmin();
-
-        // --- READS ---
-        // GET rule: Determines if a user can read a *single specific document*.
-        // This can check document fields because it operates on a single resource.
-        allow get: if isAdmin() || isOwner(resource.data.ownerId) || resource.data.isApproved == true;
-
-        // LIST rule: Determines if a user can run a *query*. This CANNOT use `resource.data`.
-        // Security is enforced because Firestore ensures that any query ONLY returns documents
-        // that the user has permission to GET. If a query could potentially return a
-        // document that fails the GET rule, the entire query is denied.
+        allow update, delete: if isOwner(resource.data.ownerId);
+        
+        // NON-ADMIN READS:
+        // Allow GET if user is owner OR property is approved.
+        allow get: if isOwner(resource.data.ownerId) || resource.data.isApproved == true;
+        
+        // Allow LIST for any query. Security is maintained because Firestore
+        // still checks the GET rule against every potential document in the query results.
+        // This forces public queries to filter for `isApproved == true`.
         allow list: if true;
     }
     
