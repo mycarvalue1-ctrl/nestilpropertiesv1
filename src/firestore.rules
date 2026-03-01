@@ -43,26 +43,21 @@ service cloud.firestore {
     // =================================
     match /properties/{propertyId} {
       // DEV/TESTING RULE: To simplify development and testing, allow any
-      // authenticated user to read all property data. This is less secure
+      // authenticated user to read and write all property data. This is less secure
       // but useful for unblocking UI development.
-      allow read: if isSignedIn();
-      
-      // WRITE rules remain secure.
-      allow create: if isOwner(request.resource.data.ownerId);
-      allow update, delete: if isOwner(resource.data.ownerId) || isAdmin();
+      allow read, write: if isSignedIn();
     }
     
     // =================================
     // Property Private Details Rules
     // =================================
     match /propertyPrivateDetails/{propertyId} {
-        // Only a logged-in user can read the contact details.
-        // The app logic (credits/subscription) is handled on the client-side.
-        // This rule is permissive to allow the credit-based system to function.
+        // Logged-in users can read private details. The client-side logic
+        // is responsible for handling credit/subscription checks before attempting the read.
         allow read: if isSignedIn();
 
-        // Only the actual property owner or an admin can create/edit/delete private details.
-        // We use get() to look up the ownerId from the main properties collection.
+        // Only the actual property owner or an admin can write private details.
+        // This rule uses get() to securely check the ownerId from the main properties collection.
         allow write: if (isOwner(get(/databases/$(database)/documents/properties/$(propertyId)).data.ownerId) || isAdmin());
     }
 
@@ -71,13 +66,13 @@ service cloud.firestore {
     // Site Visit Rules
     // =================================
      match /site_visits/{visitId} {
-      // An admin, property owner, or visitor can read a visit request.
+      // An admin, property owner, or the visitor who made the request can read it.
       allow read: if isAdmin() || isOwner(resource.data.ownerId) || isOwner(resource.data.visitorId);
-      // An admin or property owner can update the status (confirm/reject).
+      // An admin or the property owner can update the visit status.
       allow update: if isAdmin() || isOwner(resource.data.ownerId);
       // A visitor can create a request for themselves.
       allow create: if isOwner(request.resource.data.visitorId);
-      // Deletion is disabled for record-keeping.
+      // Deletion is disabled to maintain a record of visit requests.
       allow delete: if false;
     }
 
@@ -87,14 +82,14 @@ service cloud.firestore {
     match /amenities/{amenityId} {
       // Anyone can read the list of amenities.
       allow get, list: if true;
-      // Only admins can write to the list of amenities.
+      // Only admins can modify the list of amenities.
       allow write: if isAdmin();
     }
 
     match /nearby_place_types/{nearbyPlaceTypeId} {
       // Anyone can read the list of nearby place types.
       allow get, list: if true;
-      // Only admins can write to this list.
+      // Only admins can modify this list.
       allow write: if isAdmin();
     }
   }
