@@ -18,34 +18,24 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { LocationSelector } from './location-selector';
-import { Input } from './ui/input';
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
-import { useTranslation } from '@/hooks/use-translation';
-import { useLanguage } from '@/context/language-context';
-
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   const { user: currentUser, isUserLoading } = useUser();
   const auth = useAuth();
-  const { t } = useTranslation();
-  const { language, setLanguage } = useLanguage();
 
   const navLinks = [
-    { href: '/properties?transaction=Rent', label: t('rent') },
-    { href: '/properties?transaction=Sale', label: t('buy') },
+    { href: '/properties?transaction=Rent', label: 'Rent' },
+    { href: '/properties?transaction=Sale', label: 'Buy' },
   ];
   
   const handleLogout = async () => {
@@ -58,7 +48,7 @@ export function Header() {
   const isAdmin = currentUser?.email === 'helpnestil@gmail.com';
 
   // Create a specific list for the mobile menu to avoid duplicate keys.
-  const mobileNavLinks = [...navLinks, { href: '/post-property', label: t('post_property') }];
+  const mobileNavLinks = [...navLinks, { href: '/post-property', label: 'Post Property Free' }];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -88,24 +78,9 @@ export function Header() {
           <Button variant="accent" asChild className="hidden sm:inline-flex">
             <Link href="/post-property">
               <PlusCircle className="mr-2 h-4 w-4" />
-              {t('post_property')}
+              Post Property Free
             </Link>
           </Button>
-
-           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Globe className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Language</DropdownMenuLabel>
-              <DropdownMenuRadioGroup value={language} onValueChange={(value) => setLanguage(value as 'en' | 'te')}>
-                <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="te">తెలుగు</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -77,17 +77,9 @@
           "type": "string",
           "description": "The main title or headline for the property listing."
         },
-        "title_te": {
-          "type": "string",
-          "description": "The main title or headline for the property listing in Telugu."
-        },
         "description": {
           "type": "string",
           "description": "A detailed description of the property, highlighting its features and benefits."
-        },
-        "description_te": {
-          "type": "string",
-          "description": "A detailed description of the property in Telugu."
         },
         "listingType": {
           "type": "string",
@@ -523,4 +515,3 @@
     "reasoning": "The recommended Firestore data structure for PropertyLink prioritizes Authorization Independence, Structural Segregation, and Query-Aware Security (QAPs) to ensure a secure, scalable, and debuggable system. \n\n**Authorization Independence via Denormalization:**\n\n1.  **Properties (`/properties/{propertyId}`):** Each `Property` document will include an `ownerId` field. This denormalizes the ownership information directly into the property document. Security rules for property access (read, update, delete) can then directly check `request.auth.uid == resource.data.ownerId` or `exists(/roles_admin/$(request.auth.uid))` without needing to perform expensive and dependency-prone `get()` calls to a parent `User` document. This allows for atomic operations (e.g., creating a property) and prevents rule evaluation complexities.\n2.  **Favorite Properties (`/users/{userId}/favorite_properties/{favoritePropertyId}`):** By embedding `FavoriteProperty` under a user-specific path, `userId` is available directly in the path wildcard `{userId}`. This naturally aligns with `request.auth.uid == userId`, ensuring that a user can only manage their own favorited properties without `get()` calls.\n\n**Query-Aware Security (QAPs) for List Operations:**\n\n1.  **Public Properties (`/properties/{propertyId}`):** Properties in this collection are globally accessible to visitors for searching, but only if they are approved by an administrator. The `isApproved` field within each `Property` document is crucial here. For visitors to list properties, Firestore security rules will enforce `allow list: if resource.data.isApproved == true;`. This mandates that any client-side query performing a `list` operation (e.g., displaying all properties on the home page or search results) *must* include `where('isApproved', '==', true)`. If a query omits this filter, the rule will deny the operation, preventing unauthorized data exposure. Admins, however, will have broader `read` access to all properties, regardless of their approval status, enabled by `exists(/roles_admin/$(request.auth.uid))`. This ensures public visibility is strictly controlled while maintaining admin oversight.\n2.  **Structural Segregation:** Dedicated top-level collections like `/amenities` and `/nearby_place_types` provide publicly readable, static reference data. This segregation ensures that these commonly accessed entities have a simple and homogeneous security posture (public read, admin write), simplifying rules and preventing mixed access requirements within a single collection.\n3.  **DBAC (Database-Backed Access Control):** The `/roles_admin/{adminId}` collection is used for strict admin role verification. The mere existence of a document at `/roles_admin/$(request.auth.uid)` grants admin privileges. This is more explicit and secure than relying on a `role` field within the `users/{userId}` document for critical authorization, as it separates concerns and enables simpler rule logic for admin checks."
   }
 }
-    

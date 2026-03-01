@@ -19,7 +19,6 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebas
 import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
 import { useFavorites } from '@/hooks/use-favorites';
-import { useTranslation } from '@/hooks/use-translation';
 
 
 function LoggedInHome() {
@@ -86,7 +85,6 @@ function LoggedInHome() {
 
 export default function Home() {
   const [shuffledLocalAreas, setShuffledLocalAreas] = useState<any[]>([]);
-  const { t } = useTranslation();
 
   useEffect(() => {
     const allLocalAreas =
@@ -107,7 +105,7 @@ export default function Home() {
       <section className="py-20 md:py-24 bg-secondary/50 text-center">
         <div className="container">
           <h1 className="text-4xl md:text-6xl font-bold font-headline text-primary">
-            {t('find_your_perfect_place')}
+            Find Your Perfect Place
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-foreground/80">
             Discover homes, plots, and commercial properties tailored for you.
@@ -116,15 +114,15 @@ export default function Home() {
           <div className="max-w-3xl mx-auto mt-8">
             <Tabs defaultValue="rent" className="w-full">
               <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex mx-auto">
-                <TabsTrigger value="rent">{t('rent')}</TabsTrigger>
-                <TabsTrigger value="buy">{t('buy')}</TabsTrigger>
+                <TabsTrigger value="rent">Rent</TabsTrigger>
+                <TabsTrigger value="buy">Buy</TabsTrigger>
                 <TabsTrigger value="plots">Plots</TabsTrigger>
               </TabsList>
               <div className="mt-4 p-4 md:p-6 rounded-lg bg-background/80 backdrop-blur-sm border shadow-lg">
                 <form className="grid sm:grid-cols-4 items-center gap-4">
                   <div className="sm:col-span-3">
                     <Input
-                      placeholder={t('search_properties')}
+                      placeholder="Search for properties..."
                       className="h-12 text-base"
                     />
                   </div>
@@ -240,12 +238,10 @@ export default function Home() {
             on Nestil.
           </p>
           <Button size="lg" variant="accent" asChild className="mt-8 text-lg">
-            <Link href="/post-property">{t('post_property')}</Link>
+            <Link href="/post-property">Post Property Free</Link>
           </Button>
         </div>
       </section>
     </>
   );
 }
-
-    

@@ -25,7 +25,6 @@ import { cn } from '@/lib/utils';
 import { format, setHours, setMinutes } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useTranslation } from '@/hooks/use-translation';
 
 
 const WhatsappIcon = () => (
@@ -89,7 +88,6 @@ export default function PropertyDetailPage() {
   
   const { user } = useUser();
   const firestore = useFirestore();
-  const { language } = useTranslation();
 
   const propertyRef = useMemoFirebase(() => {
     if (!firestore || !params.id) return null;
@@ -257,14 +255,12 @@ export default function PropertyDetailPage() {
   }
 
   const propertyPhotos = (property.photos && property.photos.length > 0) ? property.photos : ['https://picsum.photos/seed/property/800/600'];
-  const displayTitle = language === 'te' && property.title_te ? property.title_te : property.title;
-  const displayDescription = language === 'te' && property.description_te ? property.description_te : property.description;
 
   return (
     <div className="bg-background">
       <div className="container py-10">
         <div className="mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold">{displayTitle}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold">{property.title}</h1>
             <div className="flex items-center text-muted-foreground text-md gap-2 mt-2">
                 <MapPin className="h-5 w-5" />
                 <span>{property.address}, {property.city}, {property.pincode}</span>
@@ -318,7 +314,7 @@ export default function PropertyDetailPage() {
                         <CardTitle>Description</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground whitespace-pre-wrap">{displayDescription || 'No description available.'}</p>
+                        <p className="text-muted-foreground whitespace-pre-wrap">{property.description || 'No description available.'}</p>
                     </CardContent>
                 </Card>
 

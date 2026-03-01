@@ -10,7 +10,6 @@ export type PropertyOwner = {
 export type Property = {
   id: string;
   title: string;
-  title_te?: string;
   status: 'For Sale' | 'For Rent' | 'For Lease';
   type: string;
   price: number;
@@ -20,7 +19,6 @@ export type Property = {
   city: string;
   pincode: string;
   description: string;
-  description_te?: string;
   photos: string[];
   amenities: string[];
   nonVegAllowed?: boolean;
@@ -89,5 +87,3 @@ export type SiteVisit = {
   visitorName: string;
   visitorPhone: string;
 };
-
-    
