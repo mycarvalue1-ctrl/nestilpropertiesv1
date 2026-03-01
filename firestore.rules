@@ -1,9 +1,114 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    // =================================
+    // Helper Functions
+    // =================================
+    function isSignedIn() {
+      return request.auth != null;
     }
+
+    function isAdmin() {
+      return isSignedIn() &&
+             request.auth.token.email == 'helpnestil@gmail.com';
+    }
+
+    function isOwner(ownerId) {
+      return isSignedIn() &&
+             request.auth.uid == ownerId;
+    }
+
+    // =================================
+    // Users Collection
+    // =================================
+    match /users/{userId} {
+
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+
+      allow create: if isOwner(userId)
+                    && request.resource.data.id == userId;
+
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // =================================
+    // User Favorite Properties
+    // =================================
+    match /users/{userId}/favorite_properties/{favoritePropertyId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // =================================
+    // Properties (PUBLIC READ)
+    // =================================
+    match /properties/{propertyId} {
+
+      // ✅ Anyone can read properties
+      allow get, list: if true;
+
+      // ✅ Only logged-in user can create
+      allow create: if isSignedIn()
+                    && request.resource.data.ownerId == request.auth.uid;
+
+      // ✅ Only owner or admin can update/delete
+      allow update, delete: if isOwner(resource.data.ownerId) || isAdmin();
+    }
+
+    // =================================
+    // Property Private Details
+    // =================================
+    match /propertyPrivateDetails/{propertyId} {
+
+      // Only logged-in users can read
+      allow get, list: if isSignedIn();
+
+      // Only property owner or admin can write
+      allow write: if
+        isOwner(
+          get(/databases/$(database)/documents/properties/$(propertyId))
+          .data.ownerId
+        ) || isAdmin();
+    }
+
+    // =================================
+    // Site Visits
+    // =================================
+    match /site_visits/{visitId} {
+
+      allow get: if isAdmin()
+                  || isOwner(resource.data.ownerId)
+                  || isOwner(resource.data.visitorId);
+
+      allow list: if isAdmin();
+
+      allow create: if isOwner(request.resource.data.visitorId);
+
+      allow update: if isAdmin()
+                     || isOwner(resource.data.ownerId);
+
+      allow delete: if false;
+    }
+
+    // =================================
+    // Amenities (Public Read)
+    // =================================
+    match /amenities/{amenityId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // =================================
+    // Nearby Place Types (Public Read)
+    // =================================
+    match /nearby_place_types/{nearbyPlaceTypeId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+
   }
 }
