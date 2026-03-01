@@ -40,8 +40,7 @@ function PropertyList() {
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
-        collection(firestore, 'properties'), 
-        where('listingStatus', '==', 'approved')
+        collection(firestore, 'properties')
     );
   }, [firestore]);
 

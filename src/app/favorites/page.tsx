@@ -20,11 +20,9 @@ export default function FavoritesPage() {
   const favPropertiesQuery = useMemoFirebase(() => {
     if (!firestore || favoritePropertyIds.length === 0) return null;
     // Firestore 'in' query is limited to 30 elements at a time.
-    // Also, ensure we only query for approved properties to comply with security rules.
     return query(
         collection(firestore, 'properties'), 
-        where(documentId(), 'in', favoritePropertyIds.slice(0, 30)),
-        where('listingStatus', '==', 'approved')
+        where(documentId(), 'in', favoritePropertyIds.slice(0, 30))
     );
   }, [firestore, favoritePropertyIds]);
 
