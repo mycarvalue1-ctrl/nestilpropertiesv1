@@ -29,7 +29,7 @@ function RecentListings() {
     return query(
       collection(firestore, 'properties'),
       where('isApproved', '==', true),
-      orderBy('dateAdded', 'desc'),
+      // orderBy('dateAdded', 'desc'), // This requires a composite index. See https://console.firebase.google.com/v1/r/project/studio-4501973510-5ada2/firestore/indexes?create_composite=Clpwcm9qZWN0cy9zdHVkaW8tNDUwMTk3MzUxMC01YWRhMi9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvcHJvcGVydGllcy9pbmRleGVzL18QARoOCgppc0FwcHJvdmVkEAEaDQoJZGF0ZUFkZGVkEAIaDAoIX19uYW1lX18QAg
       limit(6)
     );
   }, [firestore]);
