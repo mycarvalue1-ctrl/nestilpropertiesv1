@@ -58,7 +58,7 @@ const amenitiesList = [
 
 const propertyTypes = [
     '1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 
-    'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel'
+    'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel', 'Land'
 ];
 const residentialTypes = ['1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 'Villa', 'Row House', 'Duplex', 'Studio Apartment'];
 
@@ -999,5 +999,3 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
     </div>
   );
 }
-
-    
