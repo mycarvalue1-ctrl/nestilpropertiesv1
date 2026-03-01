@@ -3,7 +3,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -62,32 +62,26 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       setIsUserLoading(false);
       return;
     }
+
+    // This listener handles all auth state changes (login, logout, initial load).
     const unsubscribe = onAuthStateChanged(
       auth,
-      async (user) => {
-        if (!user) {
-          // User is not signed in. Attempt to sign in anonymously.
-          // The listener will be called again with the new anonymous user.
-          try {
-            await signInAnonymously(auth);
-          } catch (error) {
-            console.error("Anonymous sign-in failed:", error);
-            setUserError(error as Error);
-            setIsUserLoading(false);
-          }
-        } else {
-          // User is signed in (either named or anonymous).
-          setUser(user);
-          setIsUserLoading(false);
-        }
+      (user) => {
+        // The `user` object will be a Firebase User on login, or `null` on logout.
+        setUser(user);
+        setIsUserLoading(false);
       },
       (error) => {
+        // This handles errors during the listener setup or auth state changes.
+        console.error("Auth state listener error:", error);
         setUserError(error);
         setIsUserLoading(false);
       }
     );
+
+    // Cleanup the listener on component unmount.
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth]); // Dependency array ensures this effect runs once when `auth` is available.
 
   const contextValue = useMemo((): FirebaseContextState => {
     const servicesAvailable = !!(firebaseApp && firestore && auth);
