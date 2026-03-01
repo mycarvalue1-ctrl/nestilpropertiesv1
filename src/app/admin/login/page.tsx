@@ -112,12 +112,6 @@ export default function AdminLoginPage() {
                 {form.formState.isSubmitting && <LoaderCircle className="animate-spin mr-2" />}
                 Sign in as Admin
               </Button>
-               <div className="mt-4 text-center text-sm">
-                Not an admin?{" "}
-                <Link href="/user-login" className="underline">
-                  Login as User
-                </Link>
-              </div>
             </CardFooter>
           </form>
         </Form>
