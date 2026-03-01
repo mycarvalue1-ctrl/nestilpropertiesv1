@@ -11,17 +11,17 @@ export default function LoginPage() {
         <p className="text-xl text-muted-foreground mt-2">Please select your login type.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto w-full">
-        <Card className="opacity-50 cursor-not-allowed">
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="items-center text-center">
             <div className="p-4 bg-primary/10 rounded-full mb-2">
                 <User className="h-10 w-10 text-primary" />
             </div>
             <CardTitle>User Login</CardTitle>
-            <CardDescription>User login is currently disabled.</CardDescription>
+            <CardDescription>For property owners, agents, and buyers.</CardDescription>
           </CardHeader>
           <CardContent className="text-center p-6 pt-0">
-            <Button size="lg" disabled>
-              Login as User
+            <Button asChild size="lg">
+              <Link href="/user-login">Login as User</Link>
             </Button>
           </CardContent>
         </Card>

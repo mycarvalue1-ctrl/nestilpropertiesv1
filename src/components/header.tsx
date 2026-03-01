@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, User, Coins, Globe } from 'lucide-react';
+import { Menu, Search, User, Coins, Globe, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -44,8 +44,8 @@ export function Header() {
   const { language, setLanguage } = useLanguage();
 
   const navLinks = [
-    { href: '/properties?status=For+Rent', label: t('rent') },
-    { href: '/properties?status=For+Sale', label: t('buy') },
+    { href: '/properties?transaction=Rent', label: t('rent') },
+    { href: '/properties?transaction=Sale', label: t('buy') },
   ];
   
   const handleLogout = async () => {
@@ -55,11 +55,10 @@ export function Header() {
     router.push('/');
   };
 
-  const adminUid = 'IultEIQMgAUPwoqAEWX7ZIunjNB3';
-  const isAdmin = currentUser?.uid === adminUid;
+  const isAdmin = currentUser?.email === 'helpnestil@gmail.com';
 
   // Create a specific list for the mobile menu to avoid duplicate keys.
-  const mobileNavLinks = [...navLinks];
+  const mobileNavLinks = [...navLinks, { href: '/post-property', label: t('post_property') }];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -69,22 +68,15 @@ export function Header() {
         <div className="ml-4 hidden md:flex">
           <LocationSelector />
         </div>
-        
-        <div className="ml-6 hidden lg:flex items-center w-full max-w-md">
-            <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder={t('search_properties')} className="pl-10"/>
-            </div>
-        </div>
 
-        <nav className="ml-auto hidden md:flex items-center space-x-6 text-sm font-medium">
+        <nav className="ml-6 hidden md:flex items-center space-x-6 text-sm font-medium">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
                 "transition-colors hover:text-foreground/80",
-                pathname?.startsWith(link.href.split('?')[0]) ? "text-foreground font-semibold" : "text-foreground/60"
+                pathname === '/properties' && (new URLSearchParams(window.location.search)).get('transaction') === link.label ? "text-foreground font-semibold" : "text-foreground/60"
               )}
             >
               {link.label}
@@ -93,6 +85,13 @@ export function Header() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-2">
+          <Button variant="accent" asChild className="hidden sm:inline-flex">
+            <Link href="/post-property">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              {t('post_property')}
+            </Link>
+          </Button>
+
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -107,11 +106,6 @@ export function Header() {
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsSearchOpen(true)}>
-            <Search className="h-5 w-5" />
-          </Button>
-
-          {/* Post Property button is removed */}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -129,7 +123,6 @@ export function Header() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/dashboard/my-properties">My Properties</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link href="/dashboard/profile">Profile</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/favorites">Favorites</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/buy-credits" className="flex items-center gap-2"><Coins /> Buy Credits</Link></DropdownMenuItem>
                   {isAdmin && (
@@ -143,25 +136,14 @@ export function Header() {
                 </>
               ) : (
                 <>
-                  <DropdownMenuLabel>Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>Welcome</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled>Login/Signup Disabled</DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/user-login">Login</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/signup">Sign Up</Link></DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Search Properties</DialogTitle>
-                </DialogHeader>
-                <div className="relative mt-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search for properties..." className="pl-10"/>
-                </div>
-              </DialogContent>
-            </Dialog>
 
           <Sheet>
             <SheetTrigger asChild>
@@ -186,9 +168,6 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
-                <div className="border-t pt-4 mt-4">
-                    <p className="p-2 text-lg font-medium text-foreground/60">Login/Signup Disabled</p>
-                </div>
               </div>
             </SheetContent>
           </Sheet>
@@ -197,5 +176,3 @@ export function Header() {
     </header>
   );
 }
-
-    
