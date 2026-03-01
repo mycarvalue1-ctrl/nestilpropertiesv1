@@ -38,8 +38,7 @@ function PropertyList() {
 
     return query(
         collection(firestore, 'properties'), 
-        where('listingStatus', '==', 'approved'),
-        orderBy('dateAdded', 'desc')
+        where('listingStatus', '==', 'approved')
     );
   }, [firestore]);
 

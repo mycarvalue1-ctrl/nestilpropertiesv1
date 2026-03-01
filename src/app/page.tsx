@@ -32,7 +32,6 @@ function LoggedInHome() {
     return query(
       collection(firestore, 'properties'),
       where('listingStatus', '==', 'approved'),
-      orderBy('dateAdded', 'desc'),
       limit(6)
     );
   }, [firestore]);
