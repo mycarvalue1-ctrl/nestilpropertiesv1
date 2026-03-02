@@ -23,9 +23,10 @@ const WhatsappIcon = () => (
 
 interface PropertyCardProps {
   property: Property;
+  priority?: boolean;
 }
 
-export function PropertyCard({ property }: PropertyCardProps) {
+export function PropertyCard({ property, priority = false }: PropertyCardProps) {
   const { toast } = useToast();
   const ownerName = property.ownerName || property.postedByType;
   const isJustListed = property.dateAdded ? differenceInDays(new Date(), parseISO(property.dateAdded)) <= 3 : false;
@@ -49,6 +50,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
           width={600}
           height={400}
           className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority={priority}
           data-ai-hint="modern house"
         />
         <div className="absolute top-2 right-2 flex items-center gap-2 z-20">

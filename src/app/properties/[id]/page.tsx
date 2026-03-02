@@ -159,7 +159,14 @@ export default function PropertyDetailPage() {
                         {propertyPhotos.map((photo, index) => (
                           <CarouselItem key={index}>
                             <div className="aspect-video relative">
-                                <Image src={photo} alt={`${property.title} photo ${index + 1}`} fill className="object-cover" />
+                                <Image
+                                  src={photo}
+                                  alt={`${property.title} photo ${index + 1}`}
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 1024px) 100vw, 66vw"
+                                  priority={index === 0}
+                                />
                             </div>
                           </CarouselItem>
                         ))}
@@ -312,5 +319,3 @@ export default function PropertyDetailPage() {
     </div>
   );
 }
-
-    

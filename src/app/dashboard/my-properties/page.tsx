@@ -53,8 +53,8 @@ export default function MyPropertiesPage() {
       </div>
 
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {myProperties.map((prop) => (
-          <PropertyCard key={prop.id} property={prop} />
+        {myProperties.map((prop, index) => (
+          <PropertyCard key={prop.id} property={prop} priority={index < 3} />
         ))}
       </div>
     </div>

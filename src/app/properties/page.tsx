@@ -135,10 +135,11 @@ function PropertyList() {
       </div>
       {clientSideFilteredProperties.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {clientSideFilteredProperties.map((prop) => (
+          {clientSideFilteredProperties.map((prop, index) => (
             <PropertyCard 
               key={prop.id} 
               property={prop}
+              priority={index < 6}
             />
           ))}
         </div>
@@ -312,5 +313,3 @@ export default function PropertiesPage() {
     </div>
   );
 }
-
-    

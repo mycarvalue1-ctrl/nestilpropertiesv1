@@ -74,10 +74,11 @@ function RecentListings() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {recentProperties.length > 0 ? (
-                  recentProperties.map((prop) => (
+                  recentProperties.map((prop, index) => (
                     <PropertyCard
                       key={prop.id}
                       property={prop}
+                      priority={index < 3}
                     />
                   ))
                 ) : (
