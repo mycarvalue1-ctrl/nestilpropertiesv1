@@ -122,6 +122,11 @@ export default function PropertyDetailPage() {
                 <span>{property.address}, {property.city}, {property.pincode}</span>
             </div>
             <div className="flex flex-wrap gap-2 mt-4">
+                {property.isApproved && (
+                    <Badge variant="default" className="text-base font-medium bg-green-100 text-green-800 border-green-200">
+                        <BadgeCheck className="mr-1.5 h-5 w-5" /> Verified by Nestil
+                    </Badge>
+                )}
                 {privateDetails?.verified && !privateDetails?.isAgent && (
                     <Badge variant="default" className="text-base font-medium bg-green-100 text-green-800 border-green-200">
                         <BadgeCheck className="mr-1.5 h-5 w-5" /> Verified Owner
