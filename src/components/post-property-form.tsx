@@ -401,6 +401,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
     const finalPhotos = [...(values.existingPhotos || []), ...uploadedPhotoURLs];
     const propertyData = {
       ownerId: user.uid,
+      ownerName: values.ownerName,
       title: values.title, description: values.description, propertyType: values.propertyType, type: values.propertyType,
       listingFor: values.listingFor, status: `For ${values.listingFor}`, city: values.city, address: values.locality,
       pincode: values.pincode, googleMapsLink: values.googleMapsLink, price: values.priceOnRequest ? 0 : values.price,

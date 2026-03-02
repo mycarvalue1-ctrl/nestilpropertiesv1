@@ -27,7 +27,7 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property }: PropertyCardProps) {
   const { toast } = useToast();
-  const ownerType = property.postedByType;
+  const ownerName = property.ownerName || property.postedByType;
   const isJustListed = property.dateAdded ? differenceInDays(new Date(), parseISO(property.dateAdded)) <= 3 : false;
 
   const handleShareClick = (e: React.MouseEvent) => {
@@ -122,7 +122,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
           </div>
           
           <div className="text-sm text-muted-foreground">
-             Posted by an <span className="font-semibold text-foreground">{ownerType}</span>
+             Posted by <span className="font-semibold text-foreground">{ownerName}</span>
           </div>
         </div>
 

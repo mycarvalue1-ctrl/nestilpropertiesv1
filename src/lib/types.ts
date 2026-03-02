@@ -43,6 +43,7 @@ export type Property = {
 
   // Fields from form that were missing
   ownerId: string;
+  ownerName?: string;
   postedByType: 'Owner' | 'Agent' | 'Builder';
   listingFor: 'Rent' | 'Sale' | 'Lease' | 'PG';
   negotiable?: boolean;
