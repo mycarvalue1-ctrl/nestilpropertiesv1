@@ -15,21 +15,31 @@ service cloud.firestore {
 
     // Rules for the 'properties' collection
     match /properties/{propertyId} {
-      // ANYONE can read properties. This is the most open rule possible and
-      // is necessary to allow public listing pages to work without auth errors.
-      allow get, list: if true;
+      // READ (get a single document)
+      // Allow if property is approved, OR if the reader is the owner, OR if the reader is an admin.
+      allow get: if (resource.data.isApproved == true) || 
+                    (resource.data.ownerId != null && isOwner(resource.data.ownerId)) || 
+                    isAdmin();
 
-      // An authenticated user can create a property for themselves.
+      // LIST (query for documents)
+      // Allow if user is an admin (can see all), OR if a user is querying for their own properties,
+      // OR if a public user is querying for approved properties.
+      // This rule enforces that public queries MUST filter by `isApproved == true`.
+      allow list: if isAdmin() ||
+                   (request.auth != null && request.query.where[0] == 'ownerId' && request.query.where[1] == '==' && request.query.where[2] == request.auth.uid) ||
+                   (request.query.where[0] == 'isApproved' && request.query.where[1] == '==' && request.query.where[2] == true);
+
+      // CREATE: An authenticated user can create a property for themselves.
       // Rule enforces that the ownerId in the document matches the user's UID and the property starts as unapproved.
       allow create: if isOwner(request.resource.data.ownerId)
                     && request.resource.data.isApproved == false;
 
-      // An owner can update their own properties, but CANNOT change the isApproved status.
+      // UPDATE: An owner can update their own properties, but CANNOT change the isApproved status.
       // An admin can update any field on any property.
       allow update: if (isOwner(resource.data.ownerId) && request.resource.data.isApproved == resource.data.isApproved)
                     || isAdmin();
 
-      // Only admins can delete properties.
+      // DELETE: Only admins can delete properties.
       allow delete: if isAdmin();
     }
 
