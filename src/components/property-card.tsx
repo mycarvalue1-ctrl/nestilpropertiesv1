@@ -1,3 +1,4 @@
+
 import type { Property } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
@@ -29,7 +30,18 @@ interface PropertyCardProps {
 export function PropertyCard({ property, priority = false }: PropertyCardProps) {
   const { toast } = useToast();
   const ownerName = property.ownerName || property.postedByType;
-  const isJustListed = property.dateAdded ? differenceInDays(new Date(), parseISO(property.dateAdded)) <= 3 : false;
+  
+  const isJustListed = (() => {
+    if (!property.dateAdded) return false;
+    try {
+      // Check if the date is recent enough
+      return differenceInDays(new Date(), parseISO(property.dateAdded)) <= 3;
+    } catch (error) {
+      // If parseISO fails, it's not a valid date, so it can't be "just listed"
+      console.warn(`Invalid date format for property ${property.id}:`, property.dateAdded);
+      return false;
+    }
+  })();
 
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
