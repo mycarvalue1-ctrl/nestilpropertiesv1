@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, getTransformedImage } from '@/lib/utils';
 
 const WhatsappIcon = () => (
   <svg
@@ -34,10 +34,11 @@ export function PropertyCard({ property, priority = false }: PropertyCardProps) 
   const isJustListed = (() => {
     if (!property.dateAdded) return false;
     try {
-      // Check if the date is recent enough
+      if (typeof property.dateAdded !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(property.dateAdded)) {
+        return false;
+      }
       return differenceInDays(new Date(), parseISO(property.dateAdded)) <= 3;
     } catch (error) {
-      // If parseISO fails, it's not a valid date, so it can't be "just listed"
       console.warn(`Invalid date format for property ${property.id}:`, property.dateAdded);
       return false;
     }
@@ -50,6 +51,9 @@ export function PropertyCard({ property, priority = false }: PropertyCardProps) 
     navigator.clipboard.writeText(url);
     toast({ title: "Link Copied!", description: "Property link copied to clipboard." });
   };
+  
+  const imageUrl = (property.photos && property.photos[0]) || 'https://picsum.photos/seed/property/600/400';
+  const transformedImageUrl = getTransformedImage(imageUrl, { width: 600, height: 400, crop: 'at_max', quality: 80 });
 
   return (
     <Card className="group w-full overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col bg-card relative">
@@ -57,7 +61,7 @@ export function PropertyCard({ property, priority = false }: PropertyCardProps) 
 
       <div className="relative">
         <Image
-          src={(property.photos && property.photos[0]) || 'https://picsum.photos/seed/property/600/400'}
+          src={transformedImageUrl}
           alt={`Photo of ${property.title}`}
           width={600}
           height={400}

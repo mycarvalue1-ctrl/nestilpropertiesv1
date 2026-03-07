@@ -13,6 +13,8 @@ import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import type { Property, PropertyOwner } from '@/lib/types';
 import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
+import { getTransformedImage } from '@/lib/utils';
 
 const WhatsappIcon = () => (
     <svg
@@ -153,11 +155,13 @@ export default function PropertyDetailPage() {
                   <CardContent className="p-0">
                     <Carousel className="w-full">
                       <CarouselContent>
-                        {propertyPhotos.map((photo, index) => (
+                        {propertyPhotos.map((photo, index) => {
+                          const transformedUrl = getTransformedImage(photo, { width: 1280, height: 720, crop: 'at_max', quality: 80 });
+                          return (
                           <CarouselItem key={index}>
                             <div className="aspect-video relative">
                                 <Image
-                                  src={photo}
+                                  src={transformedUrl}
                                   alt={`${property.title} photo ${index + 1}`}
                                   fill
                                   className="object-cover"
@@ -166,7 +170,7 @@ export default function PropertyDetailPage() {
                                 />
                             </div>
                           </CarouselItem>
-                        ))}
+                        )})}
                       </CarouselContent>
                       <CarouselPrevious className="left-4" />
                       <CarouselNext className="right-4" />
