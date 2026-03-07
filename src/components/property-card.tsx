@@ -37,8 +37,14 @@ export function PropertyCard({ property, priority = false }: PropertyCardProps) 
       if (typeof property.dateAdded !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(property.dateAdded)) {
         return false;
       }
-      return differenceInDays(new Date(), parseISO(property.dateAdded)) <= 3;
+      const date = parseISO(property.dateAdded);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return false;
+      }
+      return differenceInDays(new Date(), date) <= 3;
     } catch (error) {
+      // Catch errors from parseISO if the format is fundamentally wrong
       console.warn(`Invalid date format for property ${property.id}:`, property.dateAdded);
       return false;
     }

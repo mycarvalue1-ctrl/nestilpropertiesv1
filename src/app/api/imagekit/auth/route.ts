@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   return NextResponse.json(
-    { error: 'ImageKit features are disabled.' },
+    { error: 'This endpoint is no longer in use.' },
     { status: 404 }
   );
 }

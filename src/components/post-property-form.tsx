@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { CalendarIcon, Sparkles, MapPin, LoaderCircle } from 'lucide-react';
+import { CalendarIcon, LoaderCircle, UploadCloud, X } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
@@ -49,6 +49,8 @@ import { useFirestore, errorEmitter, FirestorePermissionError, useUser } from '@
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from './ui/skeleton';
+import { CldUploadWidget } from 'next-cloudinary';
+import Image from 'next/image';
 
 const amenitiesList = [
   'Balcony', 'Borewell Water', 'Car Parking', 'CCTV', 'Electricity', 'Gated Community', 
@@ -87,7 +89,7 @@ const formSchema = z.object({
   amenities: z.array(z.string()).optional(),
   nonVegAllowed: z.boolean().default(true),
   vehicleParking: z.string().optional(),
-  photos: z.string().optional(),
+  photos: z.string().min(1, "Please provide at least one image URL."),
 
   ownerName: z.string({ required_error: "Owner name is required." }).min(1, "Owner name is required."),
   mobile: z.string().regex(/^\d{10}$/, "Please enter a valid 10-digit mobile number."),
@@ -155,6 +157,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -268,6 +271,8 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                     // Security check: only owner or admin can edit
                     if (user && (data.ownerId === user.uid || user.email === 'helpnestil@gmail.com')) {
                         const privateData = privateDocSnap.exists() ? privateDocSnap.data() : null;
+                        const existingPhotos = data.photos || [];
+                        setImageUrls(existingPhotos);
 
                         form.reset({
                             propertyType: data.propertyType,
@@ -290,7 +295,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                             amenities: data.amenities,
                             nonVegAllowed: data.nonVegAllowed,
                             vehicleParking: data.vehicleParking,
-                            photos: data.photos ? data.photos.join(', ') : '',
+                            photos: existingPhotos.join(', '),
                             ownerName: privateData?.name || '',
                             mobile: privateData?.phone || '',
                             whatsAppAvailable: privateData?.whatsAppAvailable ?? true,
@@ -340,12 +345,6 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
     const finalPhotos = values.photos
       ? values.photos.split(',').map(url => url.trim()).filter(Boolean)
       : [];
-
-    if (finalPhotos.length === 0) {
-      form.setError("photos", { type: "manual", message: "Please provide at least one image URL." });
-      setIsSubmitting(false);
-      return;
-    }
       
     const propertyData = {
       ownerId: user.uid,
@@ -731,27 +730,85 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
             </div>
           </FormSection>
 
-          <FormSection title="Photos" description="Add links to images of your property.">
-            <FormField
-              control={form.control}
-              name="photos"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image URLs</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-                      rows={4}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Paste comma-separated URLs for your property photos. Provide at least one URL.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormSection title="Photos" description="Add images of your property. The first image will be the main one.">
+            <div className="space-y-4">
+                <CldUploadWidget
+                    uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                    onSuccess={(result: any) => {
+                        if (result.event === 'success' && result.info?.secure_url) {
+                            const newUrl = result.info.secure_url;
+                            const updatedUrls = [...imageUrls, newUrl];
+                            setImageUrls(updatedUrls);
+                            form.setValue('photos', updatedUrls.join(', '), { shouldValidate: true });
+                            toast({ title: "Image Uploaded", description: "Your image has been added." });
+                        }
+                    }}
+                >
+                    {({ open }) => {
+                        return (
+                            <Button type="button" variant="outline" onClick={() => open()}>
+                                <UploadCloud className="mr-2 h-4 w-4" />
+                                Upload from Device
+                            </Button>
+                        );
+                    }}
+                </CldUploadWidget>
+
+                <FormField
+                    control={form.control}
+                    name="photos"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Or paste image URLs (comma-separated)</FormLabel>
+                            <FormControl>
+                                <Textarea
+                                    placeholder="https://res.cloudinary.com/.../image1.jpg, https://res.cloudinary.com/.../image2.jpg"
+                                    rows={4}
+                                    {...field}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        const urls = e.target.value.split(',').map(url => url.trim()).filter(Boolean);
+                                        setImageUrls(urls);
+                                    }}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
+                {imageUrls.length > 0 && (
+                    <div className="space-y-2">
+                        <Label>Image Previews</Label>
+                        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {imageUrls.map((url, index) => (
+                                <div key={index} className="relative group">
+                                    <Image
+                                        src={url}
+                                        alt={`Property image ${index + 1}`}
+                                        width={150}
+                                        height={100}
+                                        className="object-cover rounded-md aspect-[3/2]"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        size="icon"
+                                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => {
+                                            const updatedUrls = imageUrls.filter((_, i) => i !== index);
+                                            setImageUrls(updatedUrls);
+                                            form.setValue('photos', updatedUrls.join(', '), { shouldValidate: true });
+                                        }}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
           </FormSection>
 
            <FormSection title="Contact Details">
