@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useFavorites } from '@/hooks/use-favorites';
 
 const WhatsappIcon = () => (
   <svg
@@ -30,7 +31,10 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, priority = false }: PropertyCardProps) {
   const { toast } = useToast();
+  const { favoriteIds, toggleFavorite } = useFavorites();
   const ownerName = property.ownerName || property.postedByType;
+
+  const isFavorited = favoriteIds.has(property.id);
   
   const isJustListed = (() => {
     if (!property.dateAdded) return false;
@@ -50,6 +54,12 @@ export function PropertyCard({ property, priority = false }: PropertyCardProps) 
       return false;
     }
   })();
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(property.id, isFavorited);
+  };
 
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,6 +87,9 @@ export function PropertyCard({ property, priority = false }: PropertyCardProps) 
           data-ai-hint="modern house"
         />
         <div className="absolute top-2 right-2 flex items-center gap-2 z-20">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70" onClick={handleFavoriteClick} title="Favorite property">
+              <Heart className={cn("h-4 w-4", isFavorited && "fill-destructive text-destructive")} />
+            </Button>
            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70" onClick={handleShareClick} title="Share property">
               <Share2 className="h-4 w-4" />
             </Button>
