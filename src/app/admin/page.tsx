@@ -378,7 +378,10 @@ export default function AdminPage() {
     // Sort properties by date added, newest first
     const sortedProperties = [...tableProperties].sort((a, b) => {
         try {
-            return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
+            const dateA = new Date(a.dateAdded).getTime();
+            const dateB = new Date(b.dateAdded).getTime();
+            if (isNaN(dateA) || isNaN(dateB)) return 0;
+            return dateB - dateA;
         } catch (e) {
             return 0; // if date is invalid, don't sort
         }
@@ -501,8 +504,8 @@ export default function AdminPage() {
                                  <CardContent className="space-y-2">
                                     <p className="text-3xl font-bold text-primary">₹{previewProperty.price.toLocaleString('en-IN')}</p>
                                     {previewProperty.listingFor === 'Rent' && <p className="text-sm text-muted-foreground">/month</p>}
-                                    <p className="text-sm">Maintenance: ₹{previewProperty.maintenance?.toLocaleString('en-IN') || 0} /month</p>
-                                    {previewProperty.listingFor === 'Rent' && <p className="text-sm">Deposit: ₹{previewProperty.deposit?.toLocaleString('en-IN') || 0}</p>}
+                                    <p className="text-sm">Maintenance: ₹{(previewProperty.maintenance || 0).toLocaleString('en-IN')} /month</p>
+                                    {previewProperty.listingFor === 'Rent' && <p className="text-sm">Deposit: ₹{(previewProperty.deposit || 0).toLocaleString('en-IN')}</p>}
                                  </CardContent>
                             </Card>
                             <Card>
@@ -513,7 +516,7 @@ export default function AdminPage() {
                                  <CardHeader><CardTitle className="text-lg">Amenities</CardTitle></CardHeader>
                                  <CardContent className="flex flex-wrap gap-2">
                                     {(previewProperty.amenities || []).length > 0 ? (
-                                        previewProperty.amenities.map(a => <Badge key={a} variant="secondary">{a}</Badge>)
+                                        (previewProperty.amenities || []).map(a => <Badge key={a} variant="secondary">{a}</Badge>)
                                     ) : (
                                         <p className="text-sm text-muted-foreground">No amenities listed.</p>
                                     )}
