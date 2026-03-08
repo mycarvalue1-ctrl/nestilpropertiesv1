@@ -118,7 +118,8 @@ export default function PropertyDetailPage() {
     );
   }
 
-  const propertyPhotos = (property.photos && property.photos.length > 0) ? property.photos : ['https://picsum.photos/seed/property/800/600'];
+  const validPhotos = (property.photos || []).filter(p => !p.includes('ik.imagekit.io'));
+  const propertyPhotos = validPhotos.length > 0 ? validPhotos : ['https://picsum.photos/seed/property/800/600'];
 
   return (
     <div className="bg-background">
@@ -328,5 +329,3 @@ export default function PropertyDetailPage() {
     </div>
   );
 }
-
-    

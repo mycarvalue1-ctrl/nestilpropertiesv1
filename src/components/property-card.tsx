@@ -70,7 +70,8 @@ export function PropertyCard({ property, priority = false }: PropertyCardProps) 
     toast({ title: "Link Copied!", description: "Property link copied to clipboard." });
   };
   
-  const imageUrl = (property.photos && property.photos[0]) || 'https://picsum.photos/seed/property/600/400';
+  const validPhotos = (property.photos || []).filter(p => !p.includes('ik.imagekit.io'));
+  const imageUrl = (validPhotos.length > 0 && validPhotos[0]) || 'https://picsum.photos/seed/property/600/400';
 
   return (
     <Card className="group w-full overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col bg-card relative">
@@ -195,5 +196,3 @@ export function PropertyCardSkeleton() {
     </Card>
   );
 }
-
-    
