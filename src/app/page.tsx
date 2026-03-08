@@ -19,6 +19,8 @@ import { Input } from '@/components/ui/input';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 function RecentListings() {
@@ -26,8 +28,6 @@ function RecentListings() {
 
   const recentPropertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    // This query fetches approved properties. Sorting and limiting is handled
-    // on the client to avoid needing a composite index.
     return query(
       collection(firestore, 'properties'),
       where('listingStatus', '==', 'approved')
@@ -44,7 +44,7 @@ function RecentListings() {
           try {
               return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
           } catch (e) {
-              return 0; // if date is invalid, don't sort
+              return 0;
           }
       })
       .slice(0, 6);
@@ -103,8 +103,10 @@ function RecentListings() {
 
 export default function Home() {
   const [shuffledLocalAreas, setShuffledLocalAreas] = useState<any[]>([]);
-  const [searchTab, setSearchTab] = useState('Rent');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchTab, setSearchTab] = useState('Buy');
+  const [location, setLocation] = useState('');
+  const [propertyType, setPropertyType] = useState('all');
+  const [budget, setBudget] = useState('any');
   const router = useRouter();
 
   useEffect(() => {
@@ -112,26 +114,44 @@ export default function Home() {
       locationData[0]?.districts
         .flatMap((d) => d.localities.map((l) => ({ ...l, district: d.name }))) || [];
     
-    // Fisher-Yates shuffle algorithm to shuffle in place
     for (let i = allLocalAreas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [allLocalAreas[i], allLocalAreas[j]] = [allLocalAreas[j], allLocalAreas[i]];
     }
 
     setShuffledLocalAreas(allLocalAreas.slice(0, 10));
-  }, []); // Empty dependency array ensures this runs once on the client after mount.
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (searchKeyword) {
-        params.set('keyword', searchKeyword);
+
+    if (location) {
+        params.set('keyword', location);
     }
-    if (searchTab !== 'Plots') {
-        params.set('transaction', searchTab);
-    } else {
+    
+    if (searchTab === 'Buy') {
+        params.set('transaction', 'Sale');
+    } else if (searchTab === 'Rent') {
+        params.set('transaction', 'Rent');
+    } else if (searchTab === 'Commercial') {
+        params.set('type', 'Commercial');
+        params.delete('transaction'); 
+    } else if (searchTab === 'Plot / Land') {
         params.set('type', 'Plot');
+        params.delete('transaction');
     }
+
+    if (propertyType !== 'all') {
+        params.set('type', propertyType);
+    }
+
+    if (budget !== 'any') {
+        const [min, max] = budget.split('-');
+        if(min && min !== '0') params.set('minPrice', min);
+        if(max && max !== 'Infinity') params.set('maxPrice', max);
+    }
+    
     router.push(`/properties?${params.toString()}`);
   };
 
@@ -146,32 +166,110 @@ export default function Home() {
             Discover homes, plots, and commercial properties tailored for you.
           </p>
 
-          <div className="max-w-3xl mx-auto mt-8">
-            <Tabs defaultValue="Rent" onValueChange={setSearchTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex mx-auto">
-                <TabsTrigger value="Rent">Rent</TabsTrigger>
-                <TabsTrigger value="Sale">Buy</TabsTrigger>
-                <TabsTrigger value="Plots">Plots</TabsTrigger>
+          <div className="max-w-4xl mx-auto mt-8">
+            <Tabs defaultValue="Buy" onValueChange={setSearchTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-flex mx-auto bg-transparent p-1 rounded-full border">
+                <TabsTrigger value="Buy" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Buy</TabsTrigger>
+                <TabsTrigger value="Rent" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Rent</TabsTrigger>
+                <TabsTrigger value="Commercial" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Commercial</TabsTrigger>
+                <TabsTrigger value="Plot / Land" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Plot / Land</TabsTrigger>
               </TabsList>
-              <div className="mt-4 p-4 md:p-6 rounded-lg bg-background/80 backdrop-blur-sm border shadow-lg">
-                <form className="grid sm:grid-cols-4 items-center gap-4" onSubmit={handleSearch}>
-                  <div className="sm:col-span-3">
-                    <Input
-                      placeholder="Search by city, area, or property title..."
-                      className="h-12 text-base"
-                      value={searchKeyword}
-                      onChange={(e) => setSearchKeyword(e.target.value)}
-                    />
+              
+              <div className="mt-6 p-2 rounded-lg bg-background/80 backdrop-blur-sm border shadow-lg">
+                <form onSubmit={handleSearch}>
+                  <div className="flex flex-col md:flex-row items-center">
+                    
+                    <div className="p-2 flex-1 w-full">
+                      <Label htmlFor="location" className="text-xs font-semibold uppercase text-muted-foreground">Location</Label>
+                      <Input
+                        id="location"
+                        placeholder="City, locality or project..."
+                        className="h-auto text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="w-full md:w-px h-px md:h-10 bg-border"></div>
+
+                    <div className="p-2 flex-1 w-full">
+                      <Label htmlFor="property-type" className="text-xs font-semibold uppercase text-muted-foreground">Property Type</Label>
+                      <Select value={propertyType} onValueChange={setPropertyType}>
+                          <SelectTrigger id="property-type" className="h-auto text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 data-[placeholder]:text-foreground">
+                            <SelectValue placeholder="All Types" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Types</SelectItem>
+                            <SelectItem value="House">House</SelectItem>
+                            <SelectItem value="Flat">Flat</SelectItem>
+                            <SelectItem value="Plot">Plot</SelectItem>
+                            <SelectItem value="Commercial">Commercial</SelectItem>
+                          </SelectContent>
+                        </Select>
+                    </div>
+                    
+                    <div className="w-full md:w-px h-px md:h-10 bg-border"></div>
+                    
+                    <div className="p-2 flex-1 w-full">
+                      <Label htmlFor="budget" className="text-xs font-semibold uppercase text-muted-foreground">Budget</Label>
+                      <Select value={budget} onValueChange={setBudget}>
+                          <SelectTrigger id="budget" className="h-auto text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 data-[placeholder]:text-foreground">
+                            <SelectValue placeholder="Any Budget" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="any">Any Budget</SelectItem>
+                            {searchTab === 'Rent' ? (
+                              <>
+                                <SelectItem value="0-10000">Below ₹10,000</SelectItem>
+                                <SelectItem value="10000-20000">₹10k - ₹20k</SelectItem>
+                                <SelectItem value="20000-50000">₹20k - ₹50k</SelectItem>
+                                <SelectItem value="50000-Infinity">Above ₹50k</SelectItem>
+                              </>
+                            ) : (
+                              <>
+                                <SelectItem value="0-2000000">Below ₹20 Lacs</SelectItem>
+                                <SelectItem value="2000000-5000000">₹20L - ₹50L</SelectItem>
+                                <SelectItem value="5000000-10000000">₹50L - ₹1 Cr</SelectItem>
+                                <SelectItem value="10000000-Infinity">Above ₹1 Cr</SelectItem>
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="p-2 w-full md:w-auto">
+                       <Button type="submit" size="lg" className="h-11 text-base w-full" variant="accent">
+                          <Search className="mr-2 h-5 w-5" />
+                          Search
+                      </Button>
+                    </div>
+
                   </div>
-                  <Button type="submit" size="lg" className="h-12 w-full text-base" variant="default">
-                    <Search className="mr-2 h-5 w-5" />
-                    Search
-                  </Button>
                 </form>
               </div>
             </Tabs>
           </div>
 
+          <div className="container mt-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center max-w-4xl mx-auto">
+                <div>
+                    <p className="text-3xl font-bold text-accent">12,400+</p>
+                    <p className="text-sm uppercase text-muted-foreground tracking-wider">Active Listings</p>
+                </div>
+                <div>
+                    <p className="text-3xl font-bold text-accent">26+</p>
+                    <p className="text-sm uppercase text-muted-foreground tracking-wider">Districts Covered</p>
+                </div>
+                <div>
+                    <p className="text-3xl font-bold text-accent">8,200+</p>
+                    <p className="text-sm uppercase text-muted-foreground tracking-wider">Happy Families</p>
+                </div>
+                <div>
+                    <p className="text-3xl font-bold text-accent">500+</p>
+                    <p className="text-sm uppercase text-muted-foreground tracking-wider">Verified Agents</p>
+                </div>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useMemo, useState, useEffect } from 'react';
@@ -30,12 +31,21 @@ function PropertySearchComponent() {
   const searchParams = useSearchParams();
   const firestore = useFirestore();
 
+  const getInitialPriceRange = (): [number, number] => {
+    const min = searchParams.get('minPrice');
+    const max = searchParams.get('maxPrice');
+    const maxVal = (max === 'Infinity' || !max) ? 10000000 : parseInt(max, 10);
+    return [
+      min ? parseInt(min, 10) : 0,
+      maxVal > 10000000 ? 10000000 : maxVal,
+    ];
+  };
+
   const [keyword, setKeyword] = useState(searchParams.get('keyword') || '');
   const [transaction, setTransaction] = useState(searchParams.get('transaction') || 'all');
   const [propertyType, setPropertyType] = useState(searchParams.get('type') || 'all');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>(getInitialPriceRange());
 
-  // The base query for all approved properties
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
@@ -50,7 +60,6 @@ function PropertySearchComponent() {
     if (!allProperties) return [];
 
     return allProperties.filter(prop => {
-      // A property must exist and have a numeric price to be filterable.
       if (!prop || typeof prop.price !== 'number') {
         return false;
       }
@@ -81,18 +90,17 @@ function PropertySearchComponent() {
     setPriceRange([0, 10000000]);
   };
   
-  // Update state if URL params change
   useEffect(() => {
     setKeyword(searchParams.get('keyword') || '');
     setTransaction(searchParams.get('transaction') || 'all');
     setPropertyType(searchParams.get('type') || 'all');
+    setPriceRange(getInitialPriceRange());
   }, [searchParams]);
 
 
   return (
     <div className="container py-12">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Filters Section */}
         <aside className="lg:col-span-1 sticky top-20 h-min">
           <Card>
             <CardHeader>
@@ -157,7 +165,7 @@ function PropertySearchComponent() {
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                     <span>₹{priceRange[0].toLocaleString('en-IN')}</span>
-                    <span>₹{priceRange[1].toLocaleString('en-IN')}+</span>
+                    <span>₹{priceRange[1].toLocaleString('en-IN')}{priceRange[1] === 10000000 ? '+' : ''}</span>
                 </div>
               </div>
 
@@ -165,7 +173,6 @@ function PropertySearchComponent() {
           </Card>
         </aside>
 
-        {/* Results Section */}
         <main className="lg:col-span-3">
           {isLoading ? (
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
