@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { PropertyCard } from '@/components/property-card';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit } from 'firebase/firestore';
+import type { Property } from '@/lib/types';
+import { PropertyCardSkeleton } from '@/components/property-card';
 
 const HeroSection = () => (
     <section className="relative flex flex-col justify-center min-h-[calc(100vh-68px)] py-20 px-4 md:px-10 overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-emerald-50">
@@ -70,8 +76,10 @@ const SearchWidget = () => (
                     </Select>
                 </div>
             </div>
-            <Button className="md:ml-2 mt-2 md:mt-0 bg-gradient-to-r from-primary to-[#6366F1] text-white text-sm font-bold rounded-lg hover:-translate-y-px hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300">
-                <Search size={16} className="mr-2" /> Search
+            <Button asChild className="md:ml-2 mt-2 md:mt-0 bg-gradient-to-r from-primary to-[#6366F1] text-white text-sm font-bold rounded-lg hover:-translate-y-px hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300">
+                <Link href="/properties">
+                    <Search size={16} className="mr-2" /> Search
+                </Link>
             </Button>
         </div>
     </div>
@@ -103,54 +111,41 @@ const Ticker = () => (
     </div>
 );
 
-const FeaturedProperties = () => (
-    <section className="py-16 md:py-24 px-4 md:px-10">
-        <div className="container mx-auto">
-            <div className="flex items-end justify-between mb-12">
-                <div>
-                    <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-primary mb-4">
-                        <span className="w-5 h-0.5 bg-primary rounded-full"></span>Featured Listings
-                    </div>
-                    <h2 className="font-extrabold text-3xl md:text-5xl leading-none tracking-tight text-slate-800">Verified Properties<br/>Hand-Picked for <span className="text-primary">You</span></h2>
-                </div>
-                <Button variant="outline" asChild className="hidden sm:flex border-primary/20 text-primary hover:bg-primary/5 hover:text-primary gap-1.5 hover:gap-2.5 transition-all">
-                    <Link href="/properties">Browse All →</Link>
-                </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {/* Mock data for 3 cards */}
-                <PropertyCard />
-                <PropertyCard />
-                <PropertyCard />
-            </div>
-        </div>
-    </section>
-);
+const FeaturedProperties = () => {
+    const firestore = useFirestore();
+    const featuredQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'properties'), where('featured', '==', true), where('listingStatus', '==', 'approved'), limit(3));
+    }, [firestore]);
 
-const PropertyCard = () => (
-    <Link href="/properties/1" className="block group bg-white border border-slate-200 rounded-2xl overflow-hidden relative transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-slate-600/10 hover:border-primary/20">
-         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10"></div>
-        <div className="relative h-52 overflow-hidden bg-slate-100">
-            <Image src="https://picsum.photos/seed/house1/400/200" alt="Property" layout="fill" className="object-cover group-hover:scale-105 transition-transform duration-500" />
-            <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-md text-[10px] font-extrabold tracking-wider uppercase bg-red-100 text-red-600 border border-red-200">⭐ Featured</div>
-            <div className="absolute top-3 right-3 z-20 w-8 h-8 rounded-lg bg-white/90 backdrop-blur-sm border border-slate-300 flex items-center justify-center text-lg">♡</div>
-        </div>
-        <div className="p-5">
-            <div className="flex items-start justify-between mb-2">
-                <div className="text-xl font-extrabold text-slate-900">₹92 Lakhs <span className="text-xs font-normal text-slate-500">onwards</span></div>
-                <div className="text-xs font-bold text-emerald-600 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">✓ Verified</div>
+    const { data: featuredProperties, isLoading } = useCollection<Property>(featuredQuery);
+
+    return (
+        <section className="py-16 md:py-24 px-4 md:px-10">
+            <div className="container mx-auto">
+                <div className="flex items-end justify-between mb-12">
+                    <div>
+                        <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-primary mb-4">
+                            <span className="w-5 h-0.5 bg-primary rounded-full"></span>Featured Listings
+                        </div>
+                        <h2 className="font-extrabold text-3xl md:text-5xl leading-none tracking-tight text-slate-800">Verified Properties<br/>Hand-Picked for <span className="text-primary">You</span></h2>
+                    </div>
+                    <Button variant="outline" asChild className="hidden sm:flex border-primary/20 text-primary hover:bg-primary/5 hover:text-primary gap-1.5 hover:gap-2.5 transition-all">
+                        <Link href="/properties">Browse All →</Link>
+                    </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {isLoading ? (
+                        [...Array(3)].map((_, i) => <PropertyCardSkeleton key={i} />)
+                    ) : (
+                        featuredProperties?.map((prop, index) => <PropertyCard key={prop.id} property={prop} priority={index < 3} />)
+                    )}
+                </div>
             </div>
-            <div className="text-sm font-semibold text-slate-800 leading-snug mb-1">Premium 3BHK — The Residency Tower</div>
-            <div className="text-xs text-slate-500 mb-3.5 flex items-center gap-1.5">📍 MVP Colony, Visakhapatnam</div>
-            <div className="flex gap-0 border-t border-slate-200 pt-3 text-center">
-                <div className="flex-1 border-r border-slate-200"><div className="text-sm font-bold text-slate-800">3</div><div className="text-[11px] font-medium text-slate-500">Beds</div></div>
-                <div className="flex-1 border-r border-slate-200"><div className="text-sm font-bold text-slate-800">2</div><div className="text-[11px] font-medium text-slate-500">Baths</div></div>
-                <div className="flex-1 border-r border-slate-200"><div className="text-sm font-bold text-slate-800">1,620</div><div className="text-[11px] font-medium text-slate-500">sqft</div></div>
-                <div className="flex-1"><div className="text-sm font-bold text-slate-800">8/14</div><div className="text-[11px] font-medium text-slate-500">Floor</div></div>
-            </div>
-        </div>
-    </Link>
-)
+        </section>
+    );
+};
+
 
 const CtaBand = () => (
     <div className="py-20 px-4">

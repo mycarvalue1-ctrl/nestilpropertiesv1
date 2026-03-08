@@ -1,16 +1,18 @@
+
 'use client';
 
 import Link from 'next/link';
-import { Facebook, Twitter, Linkedin, Youtube } from 'lucide-react';
+import { Facebook, Twitter, Linkedin, Youtube, Building2 } from 'lucide-react';
 
 const NavLogo = () => (
-    <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold">
-        Nest<span className="text-primary">il</span>
+    <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
+        <Building2 className="h-7 w-7" />
+        <span>Nestil</span>
     </Link>
 );
 
-const SocialIcon = ({ children }: { children: React.ReactNode }) => (
-    <a href="#" className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center text-sm cursor-pointer transition-colors hover:border-primary hover:bg-primary/5">
+const SocialIcon = ({ children, href }: { children: React.ReactNode; href: string; }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 cursor-pointer transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary">
         {children}
     </a>
 )
@@ -26,24 +28,24 @@ export function Footer() {
                         Andhra Pradesh's most trusted property marketplace. Buy, sell, rent with complete confidence across all 26 districts.
                     </p>
                     <div className="flex gap-2 mt-2">
-                        <SocialIcon><Twitter size={16} /></SocialIcon>
-                        <SocialIcon><Facebook size={16} /></SocialIcon>
-                        <SocialIcon><Linkedin size={16} /></SocialIcon>
-                        <SocialIcon><Youtube size={16} /></SocialIcon>
+                        <SocialIcon href="#"><Twitter size={16} /></SocialIcon>
+                        <SocialIcon href="#"><Facebook size={16} /></SocialIcon>
+                        <SocialIcon href="#"><Linkedin size={16} /></SocialIcon>
+                        <SocialIcon href="#"><Youtube size={16} /></SocialIcon>
                     </div>
                 </div>
                 <div>
                     <h4 className="text-xs font-bold tracking-[1.5px] uppercase text-slate-500 mb-5">Properties</h4>
                     <ul className="flex flex-col gap-3">
-                        <li><Link href="/properties?transaction=Sale" className="text-sm text-slate-500 hover:text-primary">Buy</Link></li>
-                        <li><Link href="/properties?transaction=Rent" className="text-sm text-slate-500 hover:text-primary">Rent</Link></li>
+                        <li><Link href="/properties?transaction=Sale" className="text-sm text-slate-500 hover:text-primary">For Sale</Link></li>
+                        <li><Link href="/properties?transaction=Rent" className="text-sm text-slate-500 hover:text-primary">For Rent</Link></li>
                         <li><Link href="/properties" className="text-sm text-slate-500 hover:text-primary">New Projects</Link></li>
                         <li><Link href="/properties?type=Commercial" className="text-sm text-slate-500 hover:text-primary">Commercial</Link></li>
                         <li><Link href="/properties?type=Plot" className="text-sm text-slate-500 hover:text-primary">Plots & Land</Link></li>
                     </ul>
                 </div>
                  <div>
-                    <h4 className="text-xs font-bold tracking-[1.5px] uppercase text-slate-500 mb-5">Cities</h4>
+                    <h4 className="text-xs font-bold tracking-[1.5px] uppercase text-slate-500 mb-5">Popular Cities</h4>
                     <ul className="flex flex-col gap-3">
                         <li><Link href="/properties?keyword=Visakhapatnam" className="text-sm text-slate-500 hover:text-primary">Visakhapatnam</Link></li>
                         <li><Link href="/properties?keyword=Vijayawada" className="text-sm text-slate-500 hover:text-primary">Vijayawada</Link></li>
@@ -60,10 +62,11 @@ export function Footer() {
                         <li><Link href="/post-property" className="text-sm text-slate-500 hover:text-primary">List Property</Link></li>
                         <li><Link href="/contact" className="text-sm text-slate-500 hover:text-primary">Contact</Link></li>
                         <li><Link href="/privacy-policy" className="text-sm text-slate-500 hover:text-primary">Privacy Policy</Link></li>
+                        <li><Link href="/terms-of-service" className="text-sm text-slate-500 hover:text-primary">Terms of Service</Link></li>
                     </ul>
                 </div>
             </div>
-            <div className="flex justify-between items-center py-5 text-sm text-slate-500">
+            <div className="flex flex-col sm:flex-row justify-between items-center py-5 text-sm text-slate-500 gap-4">
                 <span>© 2025 Nestil Technologies Pvt. Ltd. — Andhra Pradesh, India</span>
                 <span>RERA Registered · Made with ♥ in AP</span>
             </div>
