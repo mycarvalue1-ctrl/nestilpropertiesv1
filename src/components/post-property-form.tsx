@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -89,7 +88,7 @@ const formSchema = z.object({
   amenities: z.array(z.string()).optional(),
   nonVegAllowed: z.boolean().default(true),
   vehicleParking: z.string().optional(),
-  photos: z.array(z.string()).min(1, "Please upload at least one image."),
+  photos: z.array(z.string()).min(1, "Please upload at least one image.").max(5, "You can upload a maximum of 5 images."),
 
   ownerName: z.string({ required_error: "Owner name is required." }).min(1, "Owner name is required."),
   mobile: z.string().regex(/^\d{10}$/, "Please enter a valid 10-digit mobile number."),
@@ -746,6 +745,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                                   cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
                                   sources: ['local', 'url'],
                                   multiple: true,
+                                  maxFiles: 5,
                                   folder: `nestil/properties/${user?.uid || 'unknown'}`
                               }}
                               onSuccess={(result: any) => {
