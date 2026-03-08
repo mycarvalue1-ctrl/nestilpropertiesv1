@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -25,7 +26,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CheckCircle, XCircle, Clock, Download, Users, Ban, Trash2, MoreVertical, Filter, Search, Edit, Building2, LoaderCircle, BedDouble, Bath, Expand, MapPin, Archive } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import Image from 'next/image';
+import { CheckCircle, XCircle, Clock, Download, Users, Ban, Trash2, MoreVertical, Filter, Search, Edit, Building2, LoaderCircle, BedDouble, Bath, Expand, MapPin, Archive, Eye } from "lucide-react";
 import type { Property, PropertyOwner } from "@/lib/types";
 import Link from "next/link";
 import { format, fromUnixTime } from "date-fns";
@@ -155,6 +159,8 @@ export default function AdminPage() {
   const [propertySearch, setPropertySearch] = useState('');
   const [propertyStatusFilter, setPropertyStatusFilter] = useState('all');
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all');
+
+  const [previewProperty, setPreviewProperty] = useState<Property | null>(null);
 
   const [summaryCounts, setSummaryCounts] = useState({ total: 0, active: 0, soldRented: 0 });
   const [countsLoading, setCountsLoading] = useState(true);
@@ -433,6 +439,100 @@ export default function AdminPage() {
   return (
     <div className="container py-12">
       <PropertyPdfCard property={pdfProperty?.property || null} owner={pdfProperty?.owner || null} innerRef={pdfRef} />
+      
+      <Dialog open={!!previewProperty} onOpenChange={(isOpen) => !isOpen && setPreviewProperty(null)}>
+        <DialogContent className="max-w-4xl w-full">
+            {previewProperty && (
+                <>
+                    <DialogHeader>
+                        <DialogTitle>{previewProperty.title}</DialogTitle>
+                        <DialogDescription>
+                            <MapPin className="inline-block h-4 w-4 mr-1" />
+                            {previewProperty.address}, {previewProperty.city}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[75vh] overflow-y-auto pr-4">
+                        <div className="space-y-4">
+                            {previewProperty.photos && previewProperty.photos.length > 0 ? (
+                                <Carousel className="w-full">
+                                    <CarouselContent>
+                                        {previewProperty.photos.map((photo, index) => (
+                                        <CarouselItem key={index}>
+                                            <div className="aspect-video relative">
+                                                <Image src={photo} alt={`Property image ${index + 1}`} fill className="object-cover rounded-md"/>
+                                            </div>
+                                        </CarouselItem>
+                                        ))}
+                                    </CarouselContent>
+                                    <CarouselPrevious className="ml-14" />
+                                    <CarouselNext className="mr-14" />
+                                </Carousel>
+                            ) : (
+                                <div className="aspect-video bg-muted rounded-md flex items-center justify-center text-muted-foreground">No photos</div>
+                            )}
+                            
+                            <Card>
+                                <CardHeader><CardTitle className="text-lg">Key Details</CardTitle></CardHeader>
+                                <CardContent className="grid grid-cols-3 gap-4 text-center">
+                                     <div className="flex flex-col items-center gap-1">
+                                        <BedDouble className="h-6 w-6 text-primary" />
+                                        <p className="font-bold">{previewProperty.bhk || 'N/A'}</p>
+                                        <p className="text-xs text-muted-foreground">BHK</p>
+                                    </div>
+                                     <div className="flex flex-col items-center gap-1">
+                                        <Bath className="h-6 w-6 text-primary" />
+                                        <p className="font-bold">{previewProperty.baths || 'N/A'}</p>
+                                        <p className="text-xs text-muted-foreground">Baths</p>
+                                    </div>
+                                     <div className="flex flex-col items-center gap-1">
+                                        <Expand className="h-6 w-6 text-primary" />
+                                        <p className="font-bold">{previewProperty.areaSqFt ? previewProperty.areaSqFt.toLocaleString('en-IN') : 'N/A'}</p>
+                                        <p className="text-xs text-muted-foreground">sqft</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                        <div className="space-y-4">
+                            <Card>
+                                 <CardHeader><CardTitle className="text-lg">Price Details</CardTitle></CardHeader>
+                                 <CardContent className="space-y-2">
+                                    <p className="text-3xl font-bold text-primary">₹{previewProperty.price.toLocaleString('en-IN')}</p>
+                                    {previewProperty.listingFor === 'Rent' && <p className="text-sm text-muted-foreground">/month</p>}
+                                    <p className="text-sm">Maintenance: ₹{previewProperty.maintenance?.toLocaleString('en-IN') || 0} /month</p>
+                                    {previewProperty.listingFor === 'Rent' && <p className="text-sm">Deposit: ₹{previewProperty.deposit?.toLocaleString('en-IN') || 0}</p>}
+                                 </CardContent>
+                            </Card>
+                            <Card>
+                                 <CardHeader><CardTitle className="text-lg">Description</CardTitle></CardHeader>
+                                 <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{previewProperty.description}</p></CardContent>
+                            </Card>
+                            <Card>
+                                 <CardHeader><CardTitle className="text-lg">Amenities</CardTitle></CardHeader>
+                                 <CardContent className="flex flex-wrap gap-2">
+                                    {(previewProperty.amenities || []).length > 0 ? (
+                                        previewProperty.amenities.map(a => <Badge key={a} variant="secondary">{a}</Badge>)
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">No amenities listed.</p>
+                                    )}
+                                 </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                     <DialogFooter className="sm:justify-between items-center border-t pt-4">
+                        <div className="text-xs text-muted-foreground">
+                            <p>Property ID: {previewProperty.id}</p>
+                            <p>Owner ID: {previewProperty.ownerId}</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => { handleReject(previewProperty.id); setPreviewProperty(null); }}>Reject</Button>
+                            <Button onClick={() => { handleApprove(previewProperty.id); setPreviewProperty(null); }}>Approve</Button>
+                        </div>
+                    </DialogFooter>
+                </>
+            )}
+        </DialogContent>
+    </Dialog>
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">
@@ -506,12 +606,16 @@ export default function AdminPage() {
                       {formatDate(prop.dateAdded)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewProperty(prop)}>
+                            <span className="sr-only">Preview</span>
+                            <Eye className="h-4 w-4" />
+                        </Button>
                         <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700" onClick={() => handleApprove(prop.id)} disabled={processingPropertyId === prop.id}>
-                          {processingPropertyId === prop.id ? <LoaderCircle className="mr-1 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-1 h-4 w-4" />} Approve
+                          {processingPropertyId === prop.id ? <LoaderCircle className="mr-1 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-1 h-4 w-4" />}<span className="hidden sm:inline">Approve</span>
                         </Button>
                         <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleReject(prop.id)} disabled={processingPropertyId === prop.id}>
-                          {processingPropertyId === prop.id ? <LoaderCircle className="mr-1 h-4 w-4 animate-spin" /> : <XCircle className="mr-1 h-4 w-4" />} Reject
+                          {processingPropertyId === prop.id ? <LoaderCircle className="mr-1 h-4 w-4 animate-spin" /> : <XCircle className="mr-1 h-4 w-4" />}<span className="hidden sm:inline">Reject</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -654,5 +758,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
