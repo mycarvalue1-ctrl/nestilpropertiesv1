@@ -16,7 +16,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 const HeroSection = () => (
-    <section className="relative flex flex-col justify-center min-h-[calc(100vh-68px)] py-20 px-4 md:px-10 overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-emerald-50">
+    <section className="relative flex flex-col justify-center min-h-[calc(100vh-68px)] py-20 overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-emerald-50">
         {/* Blobs */}
         <div className="absolute top-[-200px] right-[-100px] w-[600px] h-[600px] bg-blue-500/5 rounded-full filter blur-3xl animate-blob pointer-events-none"></div>
         <div className="absolute bottom-[-100px] left-[-50px] w-[500px] h-[500px] bg-emerald-500/5 rounded-full filter blur-3xl animate-blob animation-delay-[-3s] pointer-events-none"></div>
@@ -155,15 +155,17 @@ const HeroStats = () => (
 );
 
 const Ticker = () => (
-    <div className="bg-white border-y border-slate-200 py-3 px-4 md:px-10 flex items-center gap-6 overflow-hidden">
-        <div className="text-[10px] font-bold tracking-[2.5px] uppercase text-primary whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
-            <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span></span>
-            All Cities
-        </div>
-        <div className="flex gap-7 animate-ticker whitespace-nowrap">
-            {['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati', 'Nellore', 'Kurnool', 'Kakinada', 'Rajahmundry', 'Eluru', 'Ongole', 'Anantapur', 'Kadapa', 'Nandyal', 'Srikakulam', 'Vizianagaram', 'Proddutur'].concat(...['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati', 'Nellore', 'Kurnool', 'Kakinada', 'Rajahmundry', 'Eluru', 'Ongole', 'Anantapur', 'Kadapa', 'Nandyal', 'Srikakulam', 'Vizianagaram', 'Proddutur']).map((city, i) => (
-                <span key={i} className="text-sm text-slate-500 flex items-center gap-2.5 after:content-['◆'] after:text-slate-200 after:text-[8px]">{city}</span>
-            ))}
+    <div className="bg-white border-y border-slate-200 py-3 overflow-hidden">
+        <div className="container mx-auto flex items-center gap-6">
+            <div className="text-[10px] font-bold tracking-[2.5px] uppercase text-primary whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span></span>
+                All Cities
+            </div>
+            <div className="flex gap-7 animate-ticker whitespace-nowrap">
+                {['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati', 'Nellore', 'Kurnool', 'Kakinada', 'Rajahmundry', 'Eluru', 'Ongole', 'Anantapur', 'Kadapa', 'Nandyal', 'Srikakulam', 'Vizianagaram', 'Proddutur'].concat(...['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati', 'Nellore', 'Kurnool', 'Kakinada', 'Rajahmundry', 'Eluru', 'Ongole', 'Anantapur', 'Kadapa', 'Nandyal', 'Srikakulam', 'Vizianagaram', 'Proddutur']).map((city, i) => (
+                    <span key={i} className="text-sm text-slate-500 flex items-center gap-2.5 after:content-['◆'] after:text-slate-200 after:text-[8px]">{city}</span>
+                ))}
+            </div>
         </div>
     </div>
 );
@@ -197,7 +199,7 @@ const FeaturedProperties = () => {
     }, [approvedProperties]);
 
     return (
-        <section className="py-16 md:py-24 px-4 md:px-10">
+        <section className="py-16 md:py-24">
             <div className="container mx-auto">
                 <div className="flex flex-col text-center md:flex-row md:text-left items-center md:items-end justify-between mb-12 gap-y-4">
                     <div>
@@ -217,8 +219,8 @@ const FeaturedProperties = () => {
                         propertiesToShow.map((prop, index) => <PropertyCard key={prop.id} property={prop} priority={index < 3} />)
                     ) : (
                         <div className="col-span-3 text-center py-10 border-dashed border-2 rounded-lg bg-background">
-                            <h3 className="text-xl font-semibold">No Approved Properties</h3>
-                            <p className="text-muted-foreground mt-2">Check back later to see available listings.</p>
+                            <h3 className="text-xl font-semibold">No Featured Properties</h3>
+                            <p className="text-muted-foreground mt-2">Check back later to see our hand-picked listings.</p>
                         </div>
                     )}
                 </div>
@@ -229,7 +231,7 @@ const FeaturedProperties = () => {
 
 
 const CtaBand = () => (
-    <div className="py-20 px-4">
+    <div className="py-20">
         <div className="container mx-auto rounded-2xl p-10 md:p-16 bg-gradient-to-r from-blue-50 to-emerald-50 border border-primary/10 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-10">
             <div className="absolute top-[-80px] right-[-80px] w-96 h-96 rounded-full bg-primary/5 pointer-events-none"></div>
             <div className="absolute bottom-[-60px] left-[20%] w-72 h-72 rounded-full bg-emerald-500/5 pointer-events-none"></div>
