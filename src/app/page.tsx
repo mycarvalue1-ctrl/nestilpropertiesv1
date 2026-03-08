@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -172,8 +171,6 @@ const Ticker = () => (
 const FeaturedProperties = () => {
     const firestore = useFirestore();
     
-    // This query is more robust as it doesn't require a composite index.
-    // It fetches the 10 most recent approved properties.
     const approvedPropertiesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         return query(
@@ -185,10 +182,16 @@ const FeaturedProperties = () => {
 
     const { data: approvedProperties, isLoading } = useCollection<Property>(approvedPropertiesQuery);
 
-    // We then filter for the 'featured' ones on the client side.
-    const featuredProperties = useMemo(() => {
+    const propertiesToShow = useMemo(() => {
         if (!approvedProperties) return [];
-        return approvedProperties.filter(prop => prop.featured).slice(0, 3);
+        
+        const featured = approvedProperties.filter(prop => prop.featured);
+        if (featured.length > 0) {
+            return featured.slice(0, 3);
+        }
+        
+        return approvedProperties.slice(0, 3);
+
     }, [approvedProperties]);
 
     return (
@@ -208,12 +211,12 @@ const FeaturedProperties = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {isLoading ? (
                         [...Array(3)].map((_, i) => <PropertyCardSkeleton key={i} />)
-                    ) : featuredProperties.length > 0 ? (
-                        featuredProperties.map((prop, index) => <PropertyCard key={prop.id} property={prop} priority={index < 3} />)
+                    ) : propertiesToShow.length > 0 ? (
+                        propertiesToShow.map((prop, index) => <PropertyCard key={prop.id} property={prop} priority={index < 3} />)
                     ) : (
                         <div className="col-span-3 text-center py-10 border-dashed border-2 rounded-lg bg-background">
-                            <h3 className="text-xl font-semibold">No Featured Properties</h3>
-                            <p className="text-muted-foreground mt-2">Check back later to see our hand-picked listings.</p>
+                            <h3 className="text-xl font-semibold">No Approved Properties</h3>
+                            <p className="text-muted-foreground mt-2">Check back later to see available listings.</p>
                         </div>
                     )}
                 </div>
@@ -252,5 +255,3 @@ export default function Home() {
     </>
   );
 }
-
-    
