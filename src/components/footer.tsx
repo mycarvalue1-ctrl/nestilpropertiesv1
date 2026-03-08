@@ -5,7 +5,6 @@ import { Facebook, Twitter, Linkedin, Youtube } from 'lucide-react';
 
 const NavLogo = () => (
     <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold">
-        <div className="w-7 h-7 rounded-md bg-gradient-to-r from-primary to-[#6366F1] flex items-center justify-center text-sm font-black text-white">N</div>
         Nest<span className="text-primary">il</span>
     </Link>
 );

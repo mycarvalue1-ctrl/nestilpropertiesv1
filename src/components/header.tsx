@@ -9,7 +9,6 @@ import { Menu } from 'lucide-react';
 
 const NavLogo = () => (
     <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary to-[#6366F1] flex items-center justify-center text-base font-black text-white">N</div>
         Nest<span className="text-primary">il</span>
     </Link>
 )
