@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, deleteDoc, collection } from 'firebase/firestore';
 import { ToastAction } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 
 export function useFavorites() {
   const { toast } = useToast();
@@ -30,7 +31,13 @@ export function useFavorites() {
       toast({
         title: 'Please log in',
         description: 'You need to be logged in to save favorites.',
-        action: <ToastAction altText="Login" onClick={() => router.push(`/login?redirect=/properties/${propertyId}`)}>Login</ToastAction>,
+        action: (
+          <ToastAction asChild altText="Login">
+            <Button variant="outline" size="sm" onClick={() => router.push(`/login?redirect=/properties/${propertyId}`)}>
+              Login
+            </Button>
+          </ToastAction>
+        ),
       });
       return;
     }
