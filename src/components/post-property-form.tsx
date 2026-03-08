@@ -58,7 +58,7 @@ const amenitiesList = [
 
 const propertyTypes = [
     '1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 
-    'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel', 'Land', 'Plot', 'Commercial', 'Agricultural Land'
+    'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel', 'Land', 'Plot', 'Commercial properties', 'Godowns', 'Warehouses', 'Agricultural Land'
 ];
 const residentialTypes = ['1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel'];
 
@@ -650,7 +650,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
               </FormSection>
           )}
 
-          {propertyType && propertyType === 'Commercial' && (
+          {propertyType && ['Commercial properties', 'Godowns', 'Warehouses'].includes(propertyType) && (
               <FormSection title="Commercial Property Details">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField control={form.control} name="details.area" render={({ field }) => (<FormItem><FormLabel>Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="e.g., 3000" {...field}/></FormControl><FormDescription>Total area in Square Feet.</FormDescription><FormMessage /></FormItem>)} />
@@ -784,15 +784,17 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                                                           </Button>
                                                       </div>
                                                   ))}
-                                                  <div
-                                                      onClick={() => open()}
-                                                      className="flex items-center justify-center w-full aspect-[3/2] rounded-md border border-dashed cursor-pointer hover:border-primary bg-muted/50"
-                                                  >
-                                                      <div className="text-center">
-                                                          <UploadCloud className="mx-auto h-8 w-8 text-muted-foreground" />
-                                                          <span className="mt-2 text-xs text-muted-foreground">Add more</span>
+                                                  {watchedPhotos.length < 5 && (
+                                                      <div
+                                                        onClick={() => open()}
+                                                        className="flex items-center justify-center w-full aspect-[3/2] rounded-md border border-dashed cursor-pointer hover:border-primary bg-muted/50"
+                                                      >
+                                                        <div className="text-center">
+                                                            <UploadCloud className="mx-auto h-8 w-8 text-muted-foreground" />
+                                                            <span className="mt-2 text-xs text-muted-foreground">Add more</span>
+                                                        </div>
                                                       </div>
-                                                  </div>
+                                                  )}
                                               </div>
 
                                           </div>
