@@ -167,7 +167,7 @@ export default function Home() {
             Across AP
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-foreground/80">
-            Browse thousands of verified properties across every district and small city of Andhra Pradesh.
+            Explore thousands of verified homes, plots, and properties across districts, towns, and cities in Andhra Pradesh.
           </p>
 
           <div className="max-w-4xl mx-auto mt-8">
