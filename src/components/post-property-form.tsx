@@ -282,7 +282,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                         const existingPhotos = data.photos || [];
                         
                         form.reset({
-                            propertyType: data.type,
+                            propertyType: data.propertyType,
                             listingFor: data.listingFor,
                             title: data.title,
                             description: data.description,
@@ -353,8 +353,8 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
     const propertyData = {
       ownerId: user.uid,
       ownerName: values.ownerName,
-      title: values.title, description: values.description, propertyType: values.propertyType, type: values.propertyType,
-      listingFor: values.listingFor, status: `For ${values.listingFor}`, city: values.city, address: values.locality,
+      title: values.title, description: values.description, propertyType: values.propertyType,
+      listingFor: values.listingFor, city: values.city, address: values.locality,
       pincode: values.pincode, googleMapsLink: values.googleMapsLink, price: values.priceOnRequest ? 0 : values.price,
       priceOnRequest: values.priceOnRequest, negotiable: values.negotiable === 'Yes', maintenance: values.maintenance,
       deposit: values.deposit, availableFrom: values.availableFrom ? values.availableFrom.toISOString() : null,

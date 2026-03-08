@@ -261,7 +261,7 @@ export default function PropertyDetailPage() {
                                 <p className="text-secondary-foreground text-sm">{property.listingFor === 'Rent' ? 'For Rent' : 'For Sale'}</p>
                                 <p className="text-3xl font-bold text-primary">₹{(property.price || 0).toLocaleString('en-IN')}</p>
                             </div>
-                            <Badge variant="default">{property.type}</Badge>
+                            <Badge variant="default">{property.propertyType}</Badge>
                         </div>
                     </CardHeader>
                     <CardContent className="pt-6 space-y-4">

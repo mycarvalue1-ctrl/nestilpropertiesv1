@@ -32,7 +32,7 @@ function PropertySearchComponent() {
 
   const [keyword, setKeyword] = useState(searchParams.get('keyword') || '');
   const [transaction, setTransaction] = useState(searchParams.get('transaction') || 'all');
-  const [type, setType] = useState(searchParams.get('type') || 'all');
+  const [propertyType, setPropertyType] = useState(searchParams.get('type') || 'all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
 
   // The base query for all approved properties
@@ -66,18 +66,18 @@ function PropertySearchComponent() {
           ? (prop.listingFor?.toLowerCase() || '') === transaction.toLowerCase()
           : true;
 
-      const typeMatch = type !== 'all' ? prop.type === type : true;
+      const typeMatch = propertyType !== 'all' ? prop.propertyType === propertyType : true;
 
       const priceMatch = prop.price >= priceRange[0] && prop.price <= priceRange[1];
 
       return keywordMatch && transactionMatch && typeMatch && priceMatch;
     });
-  }, [allProperties, keyword, transaction, type, priceRange]);
+  }, [allProperties, keyword, transaction, propertyType, priceRange]);
 
   const handleReset = () => {
     setKeyword('');
     setTransaction('all');
-    setType('all');
+    setPropertyType('all');
     setPriceRange([0, 10000000]);
   };
   
@@ -85,7 +85,7 @@ function PropertySearchComponent() {
   useEffect(() => {
     setKeyword(searchParams.get('keyword') || '');
     setTransaction(searchParams.get('transaction') || 'all');
-    setType(searchParams.get('type') || 'all');
+    setPropertyType(searchParams.get('type') || 'all');
   }, [searchParams]);
 
 
@@ -135,7 +135,7 @@ function PropertySearchComponent() {
 
               <div className="space-y-2">
                 <Label htmlFor="property-type">Property Type</Label>
-                <Select value={type} onValueChange={setType}>
+                <Select value={propertyType} onValueChange={setPropertyType}>
                   <SelectTrigger id="property-type">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>

@@ -143,7 +143,7 @@ export function PropertyCard({ property, priority = false }: PropertyCardProps) 
                 <span className="text-sm font-normal text-muted-foreground"> /month</span>
               )}
             </p>
-             <Badge variant="secondary" className="capitalize">{property.type}</Badge>
+             <Badge variant="secondary" className="capitalize">{property.propertyType}</Badge>
           </div>
           
           <div className="flex justify-around items-center text-center border-y py-3">

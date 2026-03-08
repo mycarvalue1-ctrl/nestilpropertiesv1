@@ -13,8 +13,7 @@ export type PropertyOwner = {
 export type Property = {
   id: string;
   title: string;
-  status: 'For Sale' | 'For Rent' | 'For Lease';
-  type: string;
+  propertyType: string;
   price: number;
   priceOnRequest?: boolean;
   areaSqFt: number;

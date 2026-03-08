@@ -422,7 +422,7 @@ export default function AdminPage() {
         prop.id,
         prop.title,
         prop.listingFor,
-        prop.type,
+        prop.propertyType,
         prop.price,
         prop.city,
         prop.address,
