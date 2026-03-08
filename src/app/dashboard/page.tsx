@@ -16,17 +16,6 @@ export default function DashboardPage() {
       <h1 className="text-3xl font-bold mb-2">Welcome, {user.displayName || user.email}!</h1>
       <p className="text-muted-foreground mb-8">Here's a summary of your account.</p>
       
-      {!user.emailVerified && (
-        <Card className="mb-6 bg-yellow-50 border-yellow-200">
-          <CardHeader>
-            <CardTitle className="text-yellow-800">Verify Your Email Address</CardTitle>
-            <CardDescription className="text-yellow-700">
-              Your email is not verified. Please check your inbox for a verification link to unlock all features.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
-
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>

@@ -12,11 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { useUser } from '@/firebase';
-import { signOut, sendEmailVerification } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, LayoutGrid, User as UserIcon, MailWarning, Shield, LogIn, UserPlus } from 'lucide-react';
+import { LogOut, LayoutGrid, User as UserIcon, Shield, LogIn, UserPlus } from 'lucide-react';
 
 export function UserNav() {
   const { user, isUserLoading } = useUser();
@@ -30,17 +30,6 @@ export function UserNav() {
       await signOut(auth);
       toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
       router.push('/');
-    }
-  };
-
-  const handleResendVerification = async () => {
-    if (user) {
-      try {
-        await sendEmailVerification(user);
-        toast({ title: 'Verification Email Sent', description: 'Please check your inbox.' });
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error', description: error.message });
-      }
     }
   };
 
@@ -113,15 +102,6 @@ export function UserNav() {
           </>
         )}
 
-        {!user.emailVerified && (
-          <>
-            <DropdownMenuItem onClick={handleResendVerification} className="cursor-pointer text-destructive focus:text-destructive">
-              <MailWarning className="mr-2 h-4 w-4" />
-              <span>Verify Email</span>
-            </DropdownMenuItem>
-             <DropdownMenuSeparator />
-          </>
-        )}
         <DropdownMenuItem asChild className="cursor-pointer">
           <Link href="/dashboard">
             <LayoutGrid className="mr-2 h-4 w-4" />

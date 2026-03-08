@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { updateProfile, updateEmail, sendEmailVerification } from 'firebase/auth';
+import { updateProfile, updateEmail } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -65,36 +65,11 @@ export default function ProfilePage() {
     }
   };
 
-  const handleResendVerification = async () => {
-    if (user) {
-      try {
-        await sendEmailVerification(user);
-        toast({ title: 'Verification Email Sent', description: 'Please check your inbox.' });
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error', description: error.message });
-      }
-    }
-  };
-
   if (!user) return null;
 
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Profile Settings</h1>
-      
-      {!user.emailVerified && (
-         <Card className="mb-6 bg-yellow-50 border-yellow-200">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-yellow-800">Verify Your Email</CardTitle>
-              <CardDescription className="text-yellow-700">
-                Your email address is not verified.
-              </CardDescription>
-            </div>
-            <Button onClick={handleResendVerification}>Resend Email</Button>
-          </CardHeader>
-        </Card>
-      )}
 
       <Card>
         <CardHeader>
