@@ -1,5 +1,6 @@
 
 
+
 // This type is used for PDF generation
 export type PropertyOwner = {
   id?: string;
@@ -61,4 +62,14 @@ export type Property = {
   postedAt: any; // Firestore ServerTimestamp
   updatedAt: any; // Firestore ServerTimestamp
   googleMapsLink?: string;
+};
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  dateJoined: string;
+  role: 'Owner' | 'Agent' | 'Builder' | 'Visitor';
+  listings: number;
 };

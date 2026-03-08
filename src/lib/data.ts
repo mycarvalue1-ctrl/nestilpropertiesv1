@@ -6,6 +6,8 @@ const getImage = (id: string) => PlaceHolderImages.find(img => img.id === id)?.i
 export const properties: Property[] = [
   {
     id: '1',
+    ownerId: 'user-1',
+    ownerName: 'Jane Doe',
     title: 'Modern Family Home in Suburbia',
     listingFor: 'Sale',
     propertyType: 'House',
@@ -20,13 +22,6 @@ export const properties: Property[] = [
       getImage('property-1-living'),
       getImage('property-1-kitchen'),
     ],
-    owner: {
-      id: 'user-1',
-      name: 'Jane Doe',
-      phone: '555-123-4567',
-      isAgent: false,
-      verified: true,
-    },
     amenities: ['Backyard', 'Garage', 'Modern Kitchen', 'Air Conditioning', 'Bore Water'],
     nearbyPlaces: [
       { name: 'Springfield Elementary', distance: '0.5 miles' },
@@ -40,10 +35,16 @@ export const properties: Property[] = [
     featured: true,
     listingStatus: 'approved',
     dateAdded: '2024-07-20T10:00:00Z',
+    postedByType: 'Owner',
+    isApproved: true,
+    postedAt: new Date(),
+    updatedAt: new Date(),
     isNew: true,
   },
   {
     id: '2',
+    ownerId: 'user-2',
+    ownerName: 'John Smith',
     title: 'Cozy Downtown Apartment',
     listingFor: 'Rent',
     propertyType: 'Flat',
@@ -57,13 +58,6 @@ export const properties: Property[] = [
       getImage('property-2-exterior'),
       getImage('property-2-bedroom'),
     ],
-    owner: {
-      id: 'user-2',
-      name: 'John Smith',
-      phone: '555-987-6543',
-      isAgent: true,
-      verified: true,
-    },
     amenities: ['City View', 'Gym Access', '24/7 Security', 'Elevator', 'Parking'],
     nearbyPlaces: [
       { name: 'Metro Station', distance: '0.2 miles' },
@@ -76,10 +70,16 @@ export const properties: Property[] = [
     featured: true,
     listingStatus: 'approved',
     dateAdded: '2024-07-22T14:30:00Z',
+    postedByType: 'Agent',
+    isApproved: true,
+    postedAt: new Date(),
+    updatedAt: new Date(),
     isUrgent: true,
   },
   {
     id: '3',
+    ownerId: 'user-3',
+    ownerName: 'Prestige Properties',
     title: 'Luxury Villa with Private Pool',
     listingFor: 'Sale',
     propertyType: 'House',
@@ -92,13 +92,6 @@ export const properties: Property[] = [
     photos: [
       getImage('property-3-exterior'),
     ],
-    owner: {
-      id: 'user-3',
-      name: 'Prestige Properties',
-      phone: '555-111-2222',
-      isAgent: true,
-      verified: false,
-    },
     amenities: ['Private Pool', 'Home Theater', 'Landscaped Garden', 'Gated Community', 'Parking'],
     nearbyPlaces: [
       { name: 'Rodeo Drive', distance: '3 miles' },
@@ -110,9 +103,15 @@ export const properties: Property[] = [
     featured: false,
     listingStatus: 'approved',
     dateAdded: '2024-07-18T09:00:00Z',
+    postedByType: 'Builder',
+    isApproved: true,
+    postedAt: new Date(),
+    updatedAt: new Date(),
   },
   {
     id: '4',
+    ownerId: 'user-4',
+    ownerName: 'Corporate Realty',
     title: 'Spacious Commercial Office Space',
     listingFor: 'Lease',
     propertyType: 'Commercial',
@@ -125,13 +124,6 @@ export const properties: Property[] = [
     photos: [
       getImage('property-5-exterior'),
     ],
-    owner: {
-      id: 'user-4',
-      name: 'Corporate Realty',
-      phone: '555-333-4444',
-      isAgent: true,
-      verified: true,
-    },
     amenities: ['Ample Parking', 'Conference Rooms', 'High-Speed Internet', 'Reception Area'],
     nearbyPlaces: [
       { name: 'City Convention Center', distance: '1 mile' },
@@ -141,10 +133,16 @@ export const properties: Property[] = [
     furnishing: 'Unfurnished',
     listingStatus: 'pending',
     dateAdded: '2024-07-23T11:00:00Z',
+    postedByType: 'Agent',
+    isApproved: false,
+    postedAt: new Date(),
+    updatedAt: new Date(),
     isNew: true,
   },
     {
     id: '5',
+    ownerId: 'user-5',
+    ownerName: 'Emily White',
     title: 'Charming Suburban Home',
     listingFor: 'Sale',
     propertyType: 'House',
@@ -157,13 +155,6 @@ export const properties: Property[] = [
     photos: [
         getImage('property-2-exterior'),
     ],
-    owner: {
-        id: 'user-5',
-        name: 'Emily White',
-        phone: '555-222-3333',
-        isAgent: false,
-        verified: true,
-    },
     amenities: ['Garden', 'Renovated Kitchen', 'Fireplace', 'Parking', 'Bore Water'],
     nearbyPlaces: [
         { name: 'Springfield High', distance: '1.5 miles' },
@@ -176,6 +167,10 @@ export const properties: Property[] = [
     featured: true,
     listingStatus: 'approved',
     dateAdded: '2024-07-24T18:00:00Z',
+    postedByType: 'Owner',
+    isApproved: true,
+    postedAt: new Date(),
+    updatedAt: new Date(),
     isUrgent: true,
   },
 ];

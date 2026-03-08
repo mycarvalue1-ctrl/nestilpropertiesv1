@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, deleteDoc, collection } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
+import { ToastAction } from '@/components/ui/toast';
 
 
 export function useFavorites() {
@@ -32,7 +33,7 @@ export function useFavorites() {
       toast({
         title: 'Please log in',
         description: 'You need to be logged in to save favorites.',
-        action: React.createElement(Button, { onClick: () => router.push(`/login?redirect=/properties/${propertyId}`) }, 'Login'),
+        action: React.createElement(ToastAction, { altText: 'Login', onClick: () => router.push(`/login?redirect=/properties/${propertyId}`) }, 'Login'),
       });
       return;
     }
