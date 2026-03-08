@@ -741,7 +741,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                   <FormItem>
                       <FormControl>
                           <CldUploadWidget
-                              uploadPreset="nestil_unsigned"
+                              uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
                               options={{
                                   sources: ['local', 'url'],
                                   multiple: true,
