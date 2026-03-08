@@ -13,6 +13,8 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
 import { PropertyCardSkeleton } from '@/components/property-card';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const HeroSection = () => (
     <section className="relative flex flex-col justify-center min-h-[calc(100vh-68px)] py-20 px-4 md:px-10 overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-emerald-50">
@@ -45,9 +47,47 @@ const HeroSection = () => (
     </section>
 );
 
-const SearchWidget = () => (
+const SearchWidget = () => {
+  const router = useRouter();
+
+  const [searchTab, setSearchTab] = useState('buy');
+  const [keyword, setKeyword] = useState('');
+  const [propertyType, setPropertyType] = useState('all');
+  const [budget, setBudget] = useState('any');
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+
+    if (keyword) {
+      params.set('keyword', keyword);
+    }
+
+    if (searchTab === 'buy') {
+      params.set('transaction', 'Sale');
+    } else if (searchTab === 'rent') {
+      params.set('transaction', 'Rent');
+    } else if (searchTab === 'commercial') {
+      params.set('type', 'Commercial properties');
+    } else if (searchTab === 'plot') {
+      params.set('type', 'Plot');
+    }
+
+    if (propertyType !== 'all') {
+      params.set('type', propertyType);
+    }
+
+    if (budget !== 'any') {
+      const [min, max] = budget.split('-');
+      if (min) params.set('minPrice', min);
+      if (max) params.set('maxPrice', max);
+    }
+
+    router.push(`/properties?${params.toString()}`);
+  };
+
+  return (
     <div className="bg-white/70 backdrop-blur-md border border-slate-300 rounded-2xl p-2 max-w-3xl shadow-2xl shadow-slate-600/10">
-        <Tabs defaultValue="buy" className="w-full">
+        <Tabs defaultValue={searchTab} onValueChange={setSearchTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4 bg-slate-200 rounded-xl p-1 mb-2">
                 <TabsTrigger value="buy" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">Buy</TabsTrigger>
                 <TabsTrigger value="rent" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">Rent</TabsTrigger>
@@ -59,31 +99,49 @@ const SearchWidget = () => (
              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 border border-slate-300 rounded-lg overflow-hidden divide-y sm:divide-y-0 sm:divide-x divide-slate-300">
                 <div className="p-2.5">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Location</label>
-                    <Input placeholder="City, locality or project…" className="border-0 p-0 h-auto text-sm focus-visible:ring-0" />
+                    <Input 
+                      placeholder="City, locality or project…" 
+                      className="border-0 p-0 h-auto text-sm focus-visible:ring-0" 
+                      value={keyword}
+                      onChange={(e) => setKeyword(e.target.value)}
+                    />
                 </div>
                  <div className="p-2.5">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Property Type</label>
-                    <Select>
+                    <Select value={propertyType} onValueChange={setPropertyType}>
                         <SelectTrigger className="border-0 p-0 h-auto text-sm focus-visible:ring-0"><SelectValue placeholder="All Types" /></SelectTrigger>
-                        <SelectContent><SelectItem value="all">All Types</SelectItem></SelectContent>
+                        <SelectContent>
+                          <SelectItem value="all">All Types</SelectItem>
+                          <SelectItem value="1 BHK Flat">1 BHK Flat</SelectItem>
+                          <SelectItem value="2 BHK Flat">2 BHK Flat</SelectItem>
+                          <SelectItem value="3 BHK Flat">3 BHK Flat</SelectItem>
+                          <SelectItem value="Independent House">Independent House</SelectItem>
+                          <SelectItem value="Villa">Villa</SelectItem>
+                          <SelectItem value="Plot">Plot</SelectItem>
+                        </SelectContent>
                     </Select>
                 </div>
                  <div className="p-2.5">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Budget</label>
-                     <Select>
+                     <Select value={budget} onValueChange={setBudget}>
                         <SelectTrigger className="border-0 p-0 h-auto text-sm focus-visible:ring-0"><SelectValue placeholder="Any Budget" /></SelectTrigger>
-                        <SelectContent><SelectItem value="all">Any Budget</SelectItem></SelectContent>
+                        <SelectContent>
+                          <SelectItem value="any">Any Budget</SelectItem>
+                          <SelectItem value="0-3000000">Under ₹30 Lac</SelectItem>
+                          <SelectItem value="3000000-6000000">₹30 - ₹60 Lac</SelectItem>
+                          <SelectItem value="6000000-10000000">₹60 Lac - ₹1 Cr</SelectItem>
+                          <SelectItem value="10000000-Infinity">Above ₹1 Cr</SelectItem>
+                        </SelectContent>
                     </Select>
                 </div>
             </div>
-            <Button asChild className="md:ml-2 mt-2 md:mt-0 bg-gradient-to-r from-primary to-[#6366F1] text-white text-sm font-bold rounded-lg hover:-translate-y-px hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300">
-                <Link href="/properties">
-                    <Search size={16} className="mr-2" /> Search
-                </Link>
+            <Button onClick={handleSearch} className="md:ml-2 mt-2 md:mt-0 bg-gradient-to-r from-primary to-[#6366F1] text-white text-sm font-bold rounded-lg hover:-translate-y-px hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300">
+                <Search size={16} className="mr-2" /> Search
             </Button>
         </div>
     </div>
-);
+  );
+};
 
 const HeroStats = () => (
     <div className="flex flex-wrap gap-x-10 gap-y-5 mt-14">
