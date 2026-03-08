@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -807,7 +808,8 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                               onSuccess={(result: any) => {
                                   if (result.event === 'success' && result.info?.secure_url) {
                                       const newUrl = result.info.secure_url;
-                                      field.onChange([...(field.value || []), newUrl]);
+                                      const currentPhotos = form.getValues('photos') || [];
+                                      form.setValue('photos', [...currentPhotos, newUrl], { shouldValidate: true });
                                       toast({ title: "Image Uploaded", description: "Your image has been added." });
                                   }
                               }}
@@ -931,3 +933,5 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
     </div>
   );
 }
+
+    
