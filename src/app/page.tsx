@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -166,8 +167,7 @@ export default function Home() {
             Across AP
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-foreground/80">
-            From Visakhapatnam to Tirupati — browse thousands of verified
-            properties across every district of Andhra Pradesh.
+            Browse thousands of verified properties across every district and small city of Andhra Pradesh.
           </p>
 
           <div className="max-w-4xl mx-auto mt-8">
