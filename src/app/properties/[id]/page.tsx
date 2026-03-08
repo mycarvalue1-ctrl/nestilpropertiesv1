@@ -9,7 +9,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { BedDouble, Bath, Expand, MapPin, Building, School, Hospital, Phone, BadgeCheck, Sparkles, Flame, Car, Fish } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useMemo } from 'react';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { Property, PropertyOwner } from '@/lib/types';
 import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -56,8 +56,10 @@ function PropertyDetailSkeleton() {
 export default function PropertyDetailPage() {
   const params = useParams<{ id: string }>();
   const [privateDetails, setPrivateDetails] = useState<PropertyOwner | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   
   const firestore = useFirestore();
+  const { user, isUserLoading: isAuthLoading } = useUser();
 
   const propertyRef = useMemoFirebase(() => {
     if (!firestore || !params.id) return null;
@@ -68,7 +70,15 @@ export default function PropertyDetailPage() {
   
   useEffect(() => {
     async function fetchPrivateDetails() {
-      if (!firestore || !params.id) return;
+      if (!firestore || !params.id || isAuthLoading) return;
+
+      if (!user) {
+        setShowLoginPrompt(true);
+        setPrivateDetails(null);
+        return;
+      }
+      
+      setShowLoginPrompt(false);
       const privateDocRef = doc(firestore, 'propertyPrivateDetails', params.id);
       try {
         const docSnap = await getDoc(privateDocRef);
@@ -78,9 +88,10 @@ export default function PropertyDetailPage() {
           setPrivateDetails(null);
         }
       } catch (error: any) {
-         if (error.code === 'permission-denied') {
-          console.log("Permission denied when fetching private details (expected for public users).");
+        if (error.code === 'permission-denied') {
+          console.log("Permission denied when fetching private details.");
           setPrivateDetails(null);
+          setShowLoginPrompt(true); // Should not happen with new rules, but good fallback
         } else {
           console.error("Error fetching private details:", error);
         }
@@ -90,7 +101,7 @@ export default function PropertyDetailPage() {
     if (property) {
       fetchPrivateDetails();
     }
-  }, [property, firestore, params.id]);
+  }, [property, firestore, params.id, user, isAuthLoading]);
 
   const mapUrl = useMemo(() => {
     if (!property) return '';
@@ -102,7 +113,7 @@ export default function PropertyDetailPage() {
   }, [property]);
 
 
-  if (isPropertyLoading) {
+  if (isPropertyLoading || isAuthLoading) {
     return <PropertyDetailSkeleton />;
   }
 
@@ -322,6 +333,22 @@ export default function PropertyDetailPage() {
                                     </a>
                                 </Button>
                             </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {showLoginPrompt && (
+                    <Card className="shadow-lg text-center">
+                        <CardHeader>
+                            <CardTitle>Contact Owner</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <p className="text-muted-foreground">Please log in to view contact details.</p>
+                            <Button asChild className="w-full">
+                                <Link href={`/login?redirect=/properties/${property?.id}`}>
+                                    <Phone className="mr-2 h-5 w-5" /> Login to View Contact
+                                </Link>
+                            </Button>
                         </CardContent>
                     </Card>
                 )}
