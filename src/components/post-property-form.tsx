@@ -89,7 +89,7 @@ const formSchema = z.object({
   amenities: z.array(z.string()).optional(),
   nonVegAllowed: z.boolean().default(true),
   vehicleParking: z.string().optional(),
-  photos: z.array(z.string()).min(1, "Please provide at least one image URL."),
+  photos: z.array(z.string()).min(1, "Please upload at least one image."),
 
   ownerName: z.string({ required_error: "Owner name is required." }).min(1, "Owner name is required."),
   mobile: z.string().regex(/^\d{10}$/, "Please enter a valid 10-digit mobile number."),
@@ -733,69 +733,90 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
             </div>
           </FormSection>
 
-          <FormSection title="Photos" description="Add images of your property. The first image will be the main one.">
-             <FormField
+          <FormSection title="Property Photos" description="Upload high-quality images of your property. Drag and drop files or click to upload. The first image will be the main one.">
+            <FormField
                 control={form.control}
                 name="photos"
                 render={({ field }) => (
-                    <FormItem>
-                       <FormControl>
-                            <CldUploadWidget
-                                signatureEndpoint="/api/sign-cloudinary-params"
-                                uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-                                onSuccess={(result: any) => {
-                                    if (result.event === 'success' && result.info?.public_id) {
-                                        const newUrl = result.info.public_id;
-                                        const updatedUrls = [...(field.value || []), newUrl];
-                                        field.onChange(updatedUrls);
-                                        toast({ title: "Image Uploaded", description: "Your image has been added." });
-                                    }
-                                }}
-                            >
-                                {({ open }) => {
-                                    return (
-                                        <Button type="button" variant="outline" onClick={() => open()}>
-                                            <UploadCloud className="mr-2 h-4 w-4" />
-                                            Upload from Device
-                                        </Button>
-                                    );
-                                }}
-                            </CldUploadWidget>
-                       </FormControl>
-                        {watchedPhotos.length > 0 && (
-                            <div className="space-y-2 pt-4">
-                                <Label>Image Previews</Label>
-                                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                    {watchedPhotos.map((publicId, index) => (
-                                        <div key={index} className="relative group">
-                                            <CldImage
-                                                src={publicId}
-                                                alt={`Property image ${index + 1}`}
-                                                width={150}
-                                                height={100}
-                                                className="object-cover rounded-md aspect-[3/2]"
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="destructive"
-                                                size="icon"
-                                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={() => {
-                                                    const updatedUrls = watchedPhotos.filter((_, i) => i !== index);
-                                                    field.onChange(updatedUrls);
-                                                }}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        <FormMessage />
-                    </FormItem>
+                  <FormItem>
+                      <FormControl>
+                          <CldUploadWidget
+                              signatureEndpoint="/api/sign-cloudinary-params"
+                              options={{
+                                  sources: ['local', 'url'],
+                                  multiple: true,
+                                  folder: `nestil/properties/${user?.uid || 'unknown'}`
+                              }}
+                              onSuccess={(result: any) => {
+                                  if (result.event === 'success' && result.info?.public_id) {
+                                      const newUrl = result.info.public_id;
+                                      field.onChange([...(field.value || []), newUrl]);
+                                      toast({ title: "Image Uploaded", description: "Your image has been added." });
+                                  }
+                              }}
+                          >
+                              {({ open }) => (
+                                  <>
+                                      {watchedPhotos && watchedPhotos.length > 0 ? (
+                                          <div className="space-y-4">
+                                              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                                  {watchedPhotos.map((publicId, index) => (
+                                                      <div key={index} className="relative group">
+                                                          <CldImage
+                                                              src={publicId}
+                                                              alt={`Property image ${index + 1}`}
+                                                              width={150}
+                                                              height={100}
+                                                              className="object-cover rounded-md aspect-[3/2] w-full"
+                                                          />
+                                                          <Button
+                                                              type="button"
+                                                              variant="destructive"
+                                                              size="icon"
+                                                              className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                              onClick={() => {
+                                                                  const updatedUrls = watchedPhotos.filter((_, i) => i !== index);
+                                                                  field.onChange(updatedUrls);
+                                                              }}
+                                                          >
+                                                              <X className="h-4 w-4" />
+                                                          </Button>
+                                                      </div>
+                                                  ))}
+                                                  <div
+                                                      onClick={() => open()}
+                                                      className="flex items-center justify-center w-full aspect-[3/2] rounded-md border border-dashed cursor-pointer hover:border-primary bg-muted/50"
+                                                  >
+                                                      <div className="text-center">
+                                                          <UploadCloud className="mx-auto h-8 w-8 text-muted-foreground" />
+                                                          <span className="mt-2 text-xs text-muted-foreground">Add more</span>
+                                                      </div>
+                                                  </div>
+                                              </div>
+
+                                          </div>
+                                      ) : (
+                                          <div
+                                              onClick={() => open()}
+                                              className="mt-2 flex justify-center rounded-lg border border-dashed border-input px-6 py-10 cursor-pointer hover:border-primary transition-colors"
+                                          >
+                                              <div className="text-center">
+                                                  <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                                                  <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
+                                                      <p>Drag & drop photos here, or click to upload</p>
+                                                  </div>
+                                                  <p className="text-xs leading-5 text-muted-foreground">Up to 5 images (PNG, JPG)</p>
+                                              </div>
+                                          </div>
+                                      )}
+                                  </>
+                              )}
+                          </CldUploadWidget>
+                      </FormControl>
+                      <FormMessage />
+                  </FormItem>
                 )}
-            />
+              />
           </FormSection>
 
            <FormSection title="Contact Details">
