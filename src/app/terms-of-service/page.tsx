@@ -43,7 +43,7 @@ export default function TermsOfServicePage() {
   
             <h2>6. Contact Us</h2>
              <p>
-                If you have any questions about these Terms, please contact us at support@nestil.in.
+                If you have any questions about these Terms, please contact us at helpnestil@gmail.com.
             </p>
           </div>
         </div>

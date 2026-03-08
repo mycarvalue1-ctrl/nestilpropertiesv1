@@ -30,7 +30,7 @@ export default function ContactPage() {
                  <div className="space-y-4">
                     <div className="flex items-center gap-4">
                         <Mail className="h-6 w-6 text-primary"/>
-                        <a href="mailto:support@nestil.in" className="text-lg hover:text-primary">support@nestil.in</a>
+                        <a href="mailto:helpnestil@gmail.com" className="text-lg hover:text-primary">helpnestil@gmail.com</a>
                     </div>
                      <div className="flex items-center gap-4">
                         <Phone className="h-6 w-6 text-primary"/>

@@ -73,7 +73,7 @@ export default function AdminLoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="admin@nestil.in" {...field} />
+                      <Input placeholder="helpnestil@gmail.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
