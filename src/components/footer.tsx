@@ -7,9 +7,16 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
+import { useState, useEffect } from 'react';
 
 export function Footer() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const propertyLinks = (
     <div className="flex flex-col gap-2 text-sm">
       <Link href="/properties?transaction=Sale&keyword=Visakhapatnam" className="text-muted-foreground hover:text-primary">Buy in Vizag</Link>
@@ -52,44 +59,48 @@ export function Footer() {
                 Andhra Pradesh's most trusted property marketplace. Find, buy, rent or sell with complete confidence.
                 </p>
             </div>
+            
+            {isClient && (
+              <>
+                {/* Columns 2, 3, 4 for Desktop */}
+                <div className="hidden md:flex flex-col gap-4">
+                    <h4 className="font-semibold uppercase">Properties</h4>
+                    {propertyLinks}
+                </div>
+                <div className="hidden md:flex flex-col gap-4">
+                    <h4 className="font-semibold uppercase">Cities</h4>
+                    {cityLinks}
+                </div>
+                <div className="hidden md:flex flex-col gap-4">
+                    <h4 className="font-semibold uppercase">Company</h4>
+                    {companyLinks}
+                </div>
 
-            {/* Columns 2, 3, 4 for Desktop */}
-            <div className="hidden md:flex flex-col gap-4">
-                <h4 className="font-semibold uppercase">Properties</h4>
-                {propertyLinks}
-            </div>
-            <div className="hidden md:flex flex-col gap-4">
-                <h4 className="font-semibold uppercase">Cities</h4>
-                {cityLinks}
-            </div>
-            <div className="hidden md:flex flex-col gap-4">
-                <h4 className="font-semibold uppercase">Company</h4>
-                {companyLinks}
-            </div>
-
-            {/* Accordion for Mobile, spans full width on mobile */}
-            <div className="md:hidden col-span-1 -mt-8">
-                 <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="properties">
-                    <AccordionTrigger className="font-semibold uppercase">Properties</AccordionTrigger>
-                    <AccordionContent>
-                        {propertyLinks}
-                    </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="cities">
-                    <AccordionTrigger className="font-semibold uppercase">Cities</AccordionTrigger>
-                    <AccordionContent>
-                        {cityLinks}
-                    </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="company">
-                    <AccordionTrigger className="font-semibold uppercase">Company</AccordionTrigger>
-                    <AccordionContent>
-                        {companyLinks}
-                    </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </div>
+                {/* Accordion for Mobile, spans full width on mobile */}
+                <div className="md:hidden col-span-1 -mt-8">
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="properties">
+                        <AccordionTrigger className="font-semibold uppercase">Properties</AccordionTrigger>
+                        <AccordionContent>
+                            {propertyLinks}
+                        </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="cities">
+                        <AccordionTrigger className="font-semibold uppercase">Cities</AccordionTrigger>
+                        <AccordionContent>
+                            {cityLinks}
+                        </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="company">
+                        <AccordionTrigger className="font-semibold uppercase">Company</AccordionTrigger>
+                        <AccordionContent>
+                            {companyLinks}
+                        </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
+              </>
+            )}
         </div>
 
         <div className="mt-8 border-t pt-6 text-sm text-muted-foreground">
