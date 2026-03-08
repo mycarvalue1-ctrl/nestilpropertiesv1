@@ -5,14 +5,14 @@ export default function TermsOfServicePage() {
           <div className="max-w-4xl mx-auto prose prose-lg text-foreground/90">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">
-                Terms of Service
+                Terms of Use
               </h1>
                <p className="mt-2 text-muted-foreground">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
   
             <h2>1. Agreement to Terms</h2>
             <p>
-              By using our website Nestil.in (the “Site”), you agree to be bound by these Terms of Service. If you do not agree to these terms, you may not access or use the Site.
+              By using our website Nestil.in (the “Site”), you agree to be bound by these Terms of Use. If you do not agree to these terms, you may not access or use the Site.
             </p>
   
             <h2>2. User Accounts</h2>
