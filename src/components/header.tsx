@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui
 import { Menu, Building2 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { LocationSelector } from './location-selector';
+import { useState } from 'react';
 
 const NavLogo = () => (
     <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
@@ -18,6 +19,7 @@ const NavLogo = () => (
 
 export function Header() {
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -25,6 +27,10 @@ export function Header() {
     { href: '/agents', label: 'Agents' },
     { href: '/about', label: 'About' },
   ];
+
+  const handleMobileLinkClick = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between h-[68px] px-4 md:px-10 bg-white/90 backdrop-blur-2xl border-b">
@@ -57,7 +63,7 @@ export function Header() {
                 <Link href="/post-property">+ List Property</Link>
             </Button>
             <UserNav />
-            <Sheet>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="md:hidden">
                         <Menu className="h-6 w-6" />
@@ -69,7 +75,11 @@ export function Header() {
                     </SheetHeader>
                     <nav className="flex flex-col gap-4 mt-8">
                         {navLinks.map(link => (
-                             <Link key={link.href} href={link.href} className={cn(
+                             <Link 
+                                key={link.href} 
+                                href={link.href} 
+                                onClick={handleMobileLinkClick}
+                                className={cn(
                                 "px-4 py-2 rounded-lg text-lg font-medium text-slate-600 transition-colors",
                                 pathname === link.href ? "bg-slate-100 text-slate-900" : "hover:bg-slate-100 hover:text-slate-900"
                             )}>
@@ -78,7 +88,7 @@ export function Header() {
                         ))}
                          <div className="border-t pt-4 mt-4 space-y-2">
                              <Button asChild className="w-full justify-start">
-                                <Link href="/post-property">+ List Property</Link>
+                                <Link href="/post-property" onClick={handleMobileLinkClick}>+ List Property</Link>
                              </Button>
                          </div>
                     </nav>
