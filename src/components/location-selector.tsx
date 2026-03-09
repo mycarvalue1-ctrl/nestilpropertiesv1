@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -44,16 +45,13 @@ export function LocationSelector({ className }: { className?: string }) {
   const [savedLocation, setSavedLocation] = useState<Location | null>(null);
   const { toast } = useToast();
   
-  // This state will track if we are on the client to avoid hydration errors.
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // This runs only on the client, after the first render, setting isMounted to true.
     setIsMounted(true); 
   }, []);
 
   useEffect(() => {
-    // This effect now only runs on the client, after isMounted is true.
     if (!isMounted) return;
 
     const handleLocationUpdate = () => {
@@ -62,7 +60,6 @@ export function LocationSelector({ className }: { className?: string }) {
         if (locationJson) {
           const parsedLocation = JSON.parse(locationJson);
           setSavedLocation(parsedLocation);
-          // Pre-fill the modal with the saved location when it opens
           const state = locationData.find(s => s.name === parsedLocation.state);
           if (state) {
             setSelectedState(state);
@@ -74,7 +71,6 @@ export function LocationSelector({ className }: { className?: string }) {
           }
           setSelectedLocality(parsedLocation.locality || '');
         } else {
-          // If no location is saved, set a default one
           const defaultLocation = {
             state: 'Andhra Pradesh',
             district: 'NTR district',
@@ -95,7 +91,7 @@ export function LocationSelector({ className }: { className?: string }) {
     return () => {
       window.removeEventListener('location-changed', handleLocationUpdate);
     };
-  }, [isMounted, locationData]); // Depend on isMounted
+  }, [isMounted, locationData]);
 
   const handleStateChange = (stateName: string) => {
     const state = locationData.find((s) => s.name === stateName);
@@ -112,7 +108,7 @@ export function LocationSelector({ className }: { className?: string }) {
     const district = districts.find((d) => d.name === districtName);
     if (district) {
       setSelectedDistrict(district);
-      setSelectedLocality(''); // Reset locality on district change
+      setSelectedLocality('');
       setStep(3);
     }
   };
@@ -136,25 +132,26 @@ export function LocationSelector({ className }: { className?: string }) {
   };
   
   const openModal = () => {
-      // When opening, ensure the modal reflects the currently saved location
-      const locationJson = localStorage.getItem('userLocation');
-      if (locationJson) {
-        try {
-            const parsedLocation = JSON.parse(locationJson);
-            const state = locationData.find(s => s.name === parsedLocation.state);
-            if (state) {
-                setSelectedState(state);
-                setDistricts(state.districts);
-                const district = state.districts.find(d => d.name === parsedLocation.district);
-                if (district) {
-                    setSelectedDistrict(district);
-                    setStep(3);
-                } else {
-                    setStep(2);
-                }
-                setSelectedLocality(parsedLocation.locality || '');
-            }
-        } catch {}
+      if (typeof window !== 'undefined') {
+        const locationJson = localStorage.getItem('userLocation');
+        if (locationJson) {
+          try {
+              const parsedLocation = JSON.parse(locationJson);
+              const state = locationData.find(s => s.name === parsedLocation.state);
+              if (state) {
+                  setSelectedState(state);
+                  setDistricts(state.districts);
+                  const district = state.districts.find(d => d.name === parsedLocation.district);
+                  if (district) {
+                      setSelectedDistrict(district);
+                      setStep(3);
+                  } else {
+                      setStep(2);
+                  }
+                  setSelectedLocality(parsedLocation.locality || '');
+              }
+          } catch {}
+        }
       }
       setIsModalOpen(true);
   }
