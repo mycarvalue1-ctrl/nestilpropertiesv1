@@ -17,6 +17,11 @@ import { PropertyCardSkeleton } from '@/components/property-card';
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
+const propertyTypesList = [
+    '1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 
+    'Villa', 'Row House', 'Duplex', 'Studio Apartment', 'PG / Hostel', 'Land', 'Plot', 'Commercial properties', 'Godowns', 'Warehouses', 'Agricultural Land'
+];
+
 const HeroSection = () => (
     <section className="relative flex flex-col justify-center min-h-[calc(100vh-68px)] py-20 overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-emerald-50">
         {/* Blobs */}
@@ -77,12 +82,6 @@ const SearchWidget = () => {
       params.set('type', propertyType);
     }
 
-    if (budget !== 'any') {
-      const [min, max] = budget.split('-');
-      if (min) params.set('minPrice', min);
-      if (max) params.set('maxPrice', max);
-    }
-
     router.push(`/properties?${params.toString()}`);
   };
 
@@ -113,12 +112,9 @@ const SearchWidget = () => {
                         <SelectTrigger className="border-0 p-0 h-auto text-sm focus-visible:ring-0"><SelectValue placeholder="All Types" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Types</SelectItem>
-                          <SelectItem value="1 BHK Flat">1 BHK Flat</SelectItem>
-                          <SelectItem value="2 BHK Flat">2 BHK Flat</SelectItem>
-                          <SelectItem value="3 BHK Flat">3 BHK Flat</SelectItem>
-                          <SelectItem value="Independent House">Independent House</SelectItem>
-                          <SelectItem value="Villa">Villa</SelectItem>
-                          <SelectItem value="Plot">Plot</SelectItem>
+                          {propertyTypesList.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
                         </SelectContent>
                     </Select>
                 </div>
@@ -267,5 +263,7 @@ export default function Home() {
     </>
   );
 }
+
+    
 
     
