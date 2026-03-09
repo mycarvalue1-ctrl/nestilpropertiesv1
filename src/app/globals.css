@@ -62,7 +62,7 @@
     content: '';
     position: fixed;
     inset: 0;
-    z-index: 0;
+    z-index: -1;
     pointer-events: none;
     background-image: radial-gradient(circle at 1px 1px, hsla(222, 47%, 11%, 0.04) 1px, transparent 0);
     background-size: 28px 28px;

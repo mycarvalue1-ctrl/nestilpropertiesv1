@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body
         className={cn(
-          'relative z-10',
+          'overflow-x-hidden',
           plusJakartaSans.variable
         )}
       >
