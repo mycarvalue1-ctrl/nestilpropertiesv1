@@ -45,22 +45,32 @@ export function LocationSelector({ className }: { className?: string }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const locationJson = localStorage.getItem('userLocation');
-      if (locationJson) {
-        setSavedLocation(JSON.parse(locationJson));
-      } else {
-        const defaultLocation = {
+    const handleLocationUpdate = () => {
+      try {
+        const locationJson = localStorage.getItem('userLocation');
+        if (locationJson) {
+          setSavedLocation(JSON.parse(locationJson));
+        } else {
+          const defaultLocation = {
             state: 'Andhra Pradesh',
             district: 'NTR district',
-            locality: 'Vijayawada'
-        };
-        localStorage.setItem('userLocation', JSON.stringify(defaultLocation));
-        setSavedLocation(defaultLocation);
+            locality: 'Vijayawada',
+          };
+          localStorage.setItem('userLocation', JSON.stringify(defaultLocation));
+          setSavedLocation(defaultLocation);
+        }
+      } catch (error) {
+        console.error("Could not parse location from localStorage", error);
       }
-    } catch (error) {
-      console.error("Could not parse location from localStorage", error)
-    }
+    };
+
+    handleLocationUpdate(); // Run on initial mount
+
+    window.addEventListener('location-changed', handleLocationUpdate);
+
+    return () => {
+      window.removeEventListener('location-changed', handleLocationUpdate);
+    };
   }, []);
 
   const handleStateChange = (stateName: string) => {

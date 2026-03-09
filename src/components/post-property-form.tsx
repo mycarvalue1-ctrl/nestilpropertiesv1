@@ -234,6 +234,19 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
       return '0.00';
   }, [watchedPrice, watchedArea, watchedPlotArea]);
 
+  const handleLocationBlur = () => {
+    const { state, city, locality } = form.getValues();
+    if (state && city && locality) {
+      const newLocation = {
+        state: state,
+        district: city,
+        locality: locality,
+      };
+      localStorage.setItem('userLocation', JSON.stringify(newLocation));
+      window.dispatchEvent(new CustomEvent('location-changed'));
+    }
+  };
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.replace(`/login?redirect=/post-property${editId ? `?edit=${editId}` : ''}`);
@@ -527,7 +540,16 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                 <FormField control={form.control} name="locality" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Area / Locality</FormLabel>
-                        <FormControl><Input placeholder="e.g., Benz Circle, Patamata" {...field} /></FormControl>
+                        <FormControl>
+                            <Input 
+                                placeholder="e.g., Benz Circle, Patamata" 
+                                {...field}
+                                onBlur={(e) => {
+                                    field.onBlur(e);
+                                    handleLocationBlur();
+                                }} 
+                            />
+                        </FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
