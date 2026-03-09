@@ -44,8 +44,13 @@ export function LocationSelector({ className }: { className?: string }) {
   const [savedLocation, setSavedLocation] = useState<Location | null>(null);
   const { toast } = useToast();
   
+  // State to prevent hydration mismatch
+  const [isMounted, setIsMounted] = useState(false);
+
   useEffect(() => {
-    // This effect runs only on the client, after the initial render.
+    // This effect runs only on the client, after the component has mounted.
+    setIsMounted(true);
+
     const handleLocationUpdate = () => {
       try {
         const locationJson = localStorage.getItem('userLocation');
@@ -145,7 +150,7 @@ export function LocationSelector({ className }: { className?: string }) {
       >
         <MapPin className="h-4 w-4 text-primary" />
         <span className="truncate max-w-[100px] md:max-w-[150px]">
-          {savedLocation
+          {isMounted && savedLocation
             ? `${savedLocation.locality}, ${savedLocation.district}`
             : 'Select Location'}
         </span>
