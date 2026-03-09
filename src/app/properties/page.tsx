@@ -21,6 +21,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, DocumentData, Query } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { locationData as staticLocationData } from '@/lib/locations';
 
 const propertyTypesList = [
     '1 BHK Flat', '2 BHK Flat', '3 BHK Flat', 'Independent House', 
@@ -76,6 +77,29 @@ function PropertySearchComponent() {
       window.removeEventListener('location-changed', handleLocationUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    // This effect synchronizes the keyword search with the global location if it matches a district.
+    const districtNames = staticLocationData[0].districts.map(d => d.name.toLowerCase());
+    const keywordLower = keyword.toLowerCase();
+
+    if (districtNames.includes(keywordLower)) {
+        const matchingDistrict = staticLocationData[0].districts.find(d => d.name.toLowerCase() === keywordLower);
+        if (matchingDistrict) {
+            const newLocation = {
+                state: 'Andhra Pradesh',
+                district: matchingDistrict.name,
+                locality: '',
+                subLocality: '',
+            };
+            const currentLoc = JSON.parse(localStorage.getItem('userLocation') || '{}');
+            if (currentLoc.district !== newLocation.district || currentLoc.locality !== newLocation.locality) {
+                localStorage.setItem('userLocation', JSON.stringify(newLocation));
+                window.dispatchEvent(new CustomEvent('location-changed'));
+            }
+        }
+    }
+  }, [keyword]);
 
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;

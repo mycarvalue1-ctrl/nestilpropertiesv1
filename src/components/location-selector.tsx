@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -66,6 +67,7 @@ export function LocationSelector({ className }: { className?: string }) {
           };
           localStorage.setItem('userLocation', JSON.stringify(defaultLocation));
           setSavedLocation(defaultLocation);
+          window.dispatchEvent(new CustomEvent('location-changed'));
         }
       } catch (error) {
         console.error("Could not parse location from localStorage", error);
@@ -147,9 +149,14 @@ export function LocationSelector({ className }: { className?: string }) {
       setIsModalOpen(true);
   }
 
-  const displayLocation = isMounted && savedLocation
-    ? `${savedLocation.subLocality || savedLocation.locality}, ${savedLocation.district}`
-    : 'Select Location';
+  const displayLocation = useMemo(() => {
+    if (!isMounted || !savedLocation) {
+      return 'Select Location';
+    }
+    const { district, locality, subLocality } = savedLocation;
+    const mainPart = [subLocality, locality].filter(Boolean).join(', ');
+    return mainPart ? `${mainPart}, ${district}` : district;
+  }, [isMounted, savedLocation]);
 
   return (
     <>
