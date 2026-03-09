@@ -235,12 +235,13 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
   }, [watchedPrice, watchedArea, watchedPlotArea]);
 
   const handleLocationBlur = () => {
-    const { state, city, locality } = form.getValues();
+    const { state, city, locality, subLocality } = form.getValues();
     if (state && city && locality) {
       const newLocation = {
         state: state,
         district: city,
         locality: locality,
+        subLocality: subLocality || '',
       };
       localStorage.setItem('userLocation', JSON.stringify(newLocation));
       window.dispatchEvent(new CustomEvent('location-changed'));
@@ -556,7 +557,14 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                 <FormField control={form.control} name="subLocality" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Sub-locality / Street (Optional)</FormLabel>
-                        <FormControl><Input placeholder="e.g., Gandhi Nagar, 4th Lane" {...field} /></FormControl>
+                        <FormControl><Input
+                          placeholder="e.g., Gandhi Nagar, 4th Lane"
+                          {...field}
+                          onBlur={(e) => {
+                            field.onBlur(e);
+                            handleLocationBlur();
+                          }}
+                        /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -986,3 +994,4 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
     
 
     
+

@@ -27,6 +27,7 @@ type Location = {
   state: string;
   district: string;
   locality: string;
+  subLocality?: string;
 };
 
 export function LocationSelector({ className }: { className?: string }) {
@@ -40,29 +41,28 @@ export function LocationSelector({ className }: { className?: string }) {
   const [selectedState, setSelectedState] = useState<State | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
   const [selectedLocality, setSelectedLocality] = useState<string>('');
+  const [selectedSubLocality, setSelectedSubLocality] = useState<string>('');
 
   const [savedLocation, setSavedLocation] = useState<Location | null>(null);
   const { toast } = useToast();
   
-  // State to prevent hydration mismatch
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // This effect runs only on the client, after the component has mounted.
     setIsMounted(true);
 
     const handleLocationUpdate = () => {
       try {
         const locationJson = localStorage.getItem('userLocation');
         if (locationJson) {
-          const parsedLocation = JSON.parse(locationJson);
+          const parsedLocation = JSON.parse(locationJson) as Location;
           setSavedLocation(parsedLocation);
         } else {
-          // Set a default if nothing is in localStorage and save it.
-          const defaultLocation = {
+          const defaultLocation: Location = {
             state: 'Andhra Pradesh',
             district: 'NTR district',
             locality: 'Vijayawada',
+            subLocality: '',
           };
           localStorage.setItem('userLocation', JSON.stringify(defaultLocation));
           setSavedLocation(defaultLocation);
@@ -72,14 +72,14 @@ export function LocationSelector({ className }: { className?: string }) {
       }
     };
 
-    handleLocationUpdate(); // Run once on mount
+    handleLocationUpdate();
 
-    window.addEventListener('location-changed', handleLocationUpdate); // Listen for external changes
+    window.addEventListener('location-changed', handleLocationUpdate);
 
     return () => {
       window.removeEventListener('location-changed', handleLocationUpdate);
     };
-  }, []); // Empty dependency array ensures this runs only once on the client after mount.
+  }, []);
 
   const handleStateChange = (stateName: string) => {
     const state = locationData.find((s) => s.name === stateName);
@@ -88,6 +88,7 @@ export function LocationSelector({ className }: { className?: string }) {
       setDistricts(state.districts);
       setSelectedDistrict(null);
       setSelectedLocality('');
+      setSelectedSubLocality('');
       setStep(2);
     }
   };
@@ -97,19 +98,21 @@ export function LocationSelector({ className }: { className?: string }) {
     if (district) {
       setSelectedDistrict(district);
       setSelectedLocality('');
+      setSelectedSubLocality('');
       setStep(3);
     }
   };
 
   const saveLocation = () => {
     if (selectedState && selectedDistrict && selectedLocality) {
-      const newLocation = {
+      const newLocation: Location = {
         state: selectedState.name,
         district: selectedDistrict.name,
         locality: selectedLocality,
+        subLocality: selectedSubLocality,
       };
       localStorage.setItem('userLocation', JSON.stringify(newLocation));
-      window.dispatchEvent(new CustomEvent('location-changed')); // This will trigger the useEffect listener to update state
+      window.dispatchEvent(new CustomEvent('location-changed'));
       setIsModalOpen(false);
       toast({
         title: "Location Updated!",
@@ -119,7 +122,6 @@ export function LocationSelector({ className }: { className?: string }) {
   };
   
   const openModal = () => {
-      // Pre-fill the modal with the currently saved location
       if (savedLocation) {
         const state = locationData.find(s => s.name === savedLocation.state);
         if (state) {
@@ -133,10 +135,21 @@ export function LocationSelector({ className }: { className?: string }) {
                 setStep(2);
             }
             setSelectedLocality(savedLocation.locality || '');
+            setSelectedSubLocality(savedLocation.subLocality || '');
         }
+      } else {
+        setStep(1);
+        setSelectedState(null);
+        setSelectedDistrict(null);
+        setSelectedLocality('');
+        setSelectedSubLocality('');
       }
       setIsModalOpen(true);
   }
+
+  const displayLocation = isMounted && savedLocation
+    ? `${savedLocation.subLocality || savedLocation.locality}, ${savedLocation.district}`
+    : 'Select Location';
 
   return (
     <>
@@ -150,9 +163,7 @@ export function LocationSelector({ className }: { className?: string }) {
       >
         <MapPin className="h-4 w-4 text-primary" />
         <span className="truncate max-w-[100px] md:max-w-[150px]">
-          {isMounted && savedLocation
-            ? `${savedLocation.locality}, ${savedLocation.district}`
-            : 'Select Location'}
+          {displayLocation}
         </span>
         <ChevronDown className="h-4 w-4 opacity-50" />
       </Button>
@@ -208,17 +219,30 @@ export function LocationSelector({ className }: { className?: string }) {
             )}
 
             {step >= 3 && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="locality-input" className="text-right">Locality</label>
-                <Input
-                    id="locality-input"
-                    value={selectedLocality}
-                    onChange={(e) => setSelectedLocality(e.target.value)}
-                    className="col-span-3"
-                    placeholder="Enter locality"
-                    disabled={!selectedDistrict}
-                />
-              </div>
+              <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="locality-input" className="text-right">Locality</label>
+                  <Input
+                      id="locality-input"
+                      value={selectedLocality}
+                      onChange={(e) => setSelectedLocality(e.target.value)}
+                      className="col-span-3"
+                      placeholder="Enter locality"
+                      disabled={!selectedDistrict}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="sublocality-input" className="text-right">Sub-locality</label>
+                  <Input
+                      id="sublocality-input"
+                      value={selectedSubLocality}
+                      onChange={(e) => setSelectedSubLocality(e.target.value)}
+                      className="col-span-3"
+                      placeholder="Street, Colony (Optional)"
+                      disabled={!selectedDistrict}
+                  />
+                </div>
+              </>
             )}
           </div>
           <DialogFooter>
