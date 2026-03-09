@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -151,13 +152,13 @@ const HeroStats = () => (
         <div className="w-px bg-slate-300 self-stretch hidden sm:block"></div>
         <div className="flex flex-col"><div className="text-3xl font-extrabold text-slate-800">8,<span>200</span>+</div><div className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-0.5">Families Helped</div></div>
         <div className="w-px bg-slate-300 self-stretch hidden sm:block"></div>
-        <div className="flex flex-col"><div className="text-3xl font-extrabold text-slate-800">500<span>+</span></div><div className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-0.5">Verified Agents</div></div>
+        <div className="flex flex-col"><div className="text-3xl font-extrabold text-slate-800">500<span>+</span></div><div className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-0.5">Verified Owners</div></div>
     </div>
 );
 
 const Ticker = () => (
     <div className="bg-white border-y border-slate-200">
-        <div className="container mx-auto flex items-center gap-6 py-3">
+        <div className="container flex items-center gap-6 py-3">
             <div className="text-[10px] font-bold tracking-[2.5px] uppercase text-primary whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span></span>
                 All Cities
@@ -190,7 +191,7 @@ const FeaturedProperties = () => {
         if (!approvedProperties) return [];
 
         const sortedProperties = [...approvedProperties].sort((a, b) => {
-            if (a.postedAt && b.postedAt) {
+            if (a.postedAt && b.postedAt && b.postedAt.seconds && a.postedAt.seconds) {
                 return b.postedAt.seconds - a.postedAt.seconds;
             }
             return 0;
