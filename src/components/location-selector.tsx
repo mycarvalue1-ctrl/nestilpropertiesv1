@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -40,6 +41,7 @@ export function LocationSelector({ className }: { className?: string }) {
   const [selectedLocality, setSelectedLocality] = useState<string>('');
 
   const [districts, setDistricts] = useState<District[]>([]);
+  const [localities, setLocalities] = useState<Locality[]>([]);
 
   const [savedLocation, setSavedLocation] = useState<Location | null>(null);
   const { toast } = useToast();
@@ -59,6 +61,7 @@ export function LocationSelector({ className }: { className?: string }) {
             const district = state.districts.find(d => d.name === parsedLocation.district);
             if (district) {
               setSelectedDistrict(district);
+              setLocalities(district.localities);
             }
           }
           setSelectedLocality(parsedLocation.locality || '');
@@ -91,6 +94,7 @@ export function LocationSelector({ className }: { className?: string }) {
       setSelectedState(state);
       setDistricts(state.districts);
       setSelectedDistrict(null);
+      setLocalities([]);
       setSelectedLocality('');
       setStep(2);
     }
@@ -100,6 +104,7 @@ export function LocationSelector({ className }: { className?: string }) {
     const district = districts.find((d) => d.name === districtName);
     if (district) {
       setSelectedDistrict(district);
+      setLocalities(district.localities || []);
       setSelectedLocality(''); // Reset locality on district change
       setStep(3);
     }
@@ -136,12 +141,13 @@ export function LocationSelector({ className }: { className?: string }) {
                 const district = state.districts.find(d => d.name === parsedLocation.district);
                 if (district) {
                     setSelectedDistrict(district);
+                    setLocalities(district.localities || []);
                     setStep(3);
                 } else {
                     setStep(2);
                 }
+                setSelectedLocality(parsedLocation.locality || '');
             }
-            setSelectedLocality(parsedLocation.locality || '');
         } catch {}
       }
       setIsModalOpen(true);
@@ -218,15 +224,23 @@ export function LocationSelector({ className }: { className?: string }) {
 
             {step >= 3 && (
               <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor='locality-input' className="text-right">Locality</label>
-                <Input
-                  id="locality-input"
-                  className="col-span-3"
-                  placeholder="Enter a locality"
+                <label className="text-right">Locality</label>
+                <Select
+                  onValueChange={setSelectedLocality}
                   value={selectedLocality}
-                  onChange={(e) => setSelectedLocality(e.target.value)}
-                  disabled={!selectedDistrict}
-                />
+                  disabled={!selectedDistrict || localities.length === 0}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a locality" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(localities || []).map((locality) => (
+                      <SelectItem key={locality.name} value={locality.name}>
+                        {locality.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>
