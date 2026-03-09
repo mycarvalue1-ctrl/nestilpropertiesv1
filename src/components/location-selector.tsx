@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -33,6 +32,8 @@ type Location = {
 export function LocationSelector({ className }: { className?: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [step, setStep] = useState(1);
+
+  const [districts, setDistricts] = useState<District[]>([]);
 
   const [locationData] = useState<State[]>(staticLocationData);
 
@@ -73,6 +74,7 @@ export function LocationSelector({ className }: { className?: string }) {
           }
           setSelectedLocality(parsedLocation.locality || '');
         } else {
+          // If no location is saved, set a default one
           const defaultLocation = {
             state: 'Andhra Pradesh',
             district: 'NTR district',
