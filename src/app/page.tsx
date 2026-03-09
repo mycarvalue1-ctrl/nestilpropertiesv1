@@ -9,7 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { PropertyCard } from '@/components/property-card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { collection, query, where, limit, orderBy } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
 import { PropertyCardSkeleton } from '@/components/property-card';
 import { useState, useMemo } from 'react';
@@ -25,7 +25,7 @@ const HeroSection = () => (
         {/* Grid lines */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px)] bg-[length:60px_60px] pointer-events-none"></div>
 
-        <div className="container mx-auto relative z-10">
+        <div className="container relative z-10">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold uppercase tracking-widest text-primary mb-7">
                 <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span></span>
                 Andhra Pradesh's #1 Property Platform
@@ -155,16 +155,18 @@ const HeroStats = () => (
 );
 
 const Ticker = () => (
-    <div className="bg-white border-y border-slate-200 py-3 overflow-hidden">
-        <div className="container mx-auto flex items-center gap-6">
+    <div className="bg-white border-y border-slate-200">
+        <div className="container mx-auto flex items-center gap-6 py-3">
             <div className="text-[10px] font-bold tracking-[2.5px] uppercase text-primary whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span></span>
                 All Cities
             </div>
-            <div className="flex gap-7 animate-ticker whitespace-nowrap">
-                {['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati', 'Nellore', 'Kurnool', 'Kakinada', 'Rajahmundry', 'Eluru', 'Ongole', 'Anantapur', 'Kadapa', 'Nandyal', 'Srikakulam', 'Vizianagaram', 'Proddutur'].concat(...['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati', 'Nellore', 'Kurnool', 'Kakinada', 'Rajahmundry', 'Eluru', 'Ongole', 'Anantapur', 'Kadapa', 'Nandyal', 'Srikakulam', 'Vizianagaram', 'Proddutur']).map((city, i) => (
-                    <span key={i} className="text-sm text-slate-500 flex items-center gap-2.5 after:content-['◆'] after:text-slate-200 after:text-[8px]">{city}</span>
-                ))}
+            <div className="flex-1 overflow-hidden">
+                <div className="flex gap-7 animate-ticker whitespace-nowrap">
+                    {['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati', 'Nellore', 'Kurnool', 'Kakinada', 'Rajahmundry', 'Eluru', 'Ongole', 'Anantapur', 'Kadapa', 'Nandyal', 'Srikakulam', 'Vizianagaram', 'Proddutur'].concat(...['Visakhapatnam', 'Vijayawada', 'Guntur', 'Tirupati', 'Nellore', 'Kurnool', 'Kakinada', 'Rajahmundry', 'Eluru', 'Ongole', 'Anantapur', 'Kadapa', 'Nandyal', 'Srikakulam', 'Vizianagaram', 'Proddutur']).map((city, i) => (
+                        <span key={i} className="text-sm text-slate-500 flex items-center gap-2.5 after:content-['◆'] after:text-slate-200 after:text-[8px]">{city}</span>
+                    ))}
+                </div>
             </div>
         </div>
     </div>
@@ -177,7 +179,8 @@ const FeaturedProperties = () => {
         if (!firestore) return null;
         return query(
             collection(firestore, 'properties'), 
-            where('listingStatus', '==', 'approved'), 
+            where('listingStatus', '==', 'approved'),
+            orderBy('postedAt', 'desc'),
             limit(10)
         );
     }, [firestore]);
@@ -187,14 +190,15 @@ const FeaturedProperties = () => {
     const propertiesToShow = useMemo(() => {
         if (!approvedProperties) return [];
         
-        // Prioritize properties marked as 'featured'
         const featured = approvedProperties.filter(prop => prop.featured);
-        if (featured.length > 0) {
+        if (featured.length >= 3) {
             return featured.slice(0, 3);
         }
         
-        // Fallback to the 3 most recently added approved properties
-        return approvedProperties.slice(0, 3);
+        const nonFeatured = approvedProperties.filter(prop => !prop.featured);
+        const combined = [...featured, ...nonFeatured];
+        
+        return combined.slice(0, 3);
 
     }, [approvedProperties]);
 
@@ -212,7 +216,7 @@ const FeaturedProperties = () => {
                         <Link href="/properties">Browse All →</Link>
                     </Button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {isLoading ? (
                         [...Array(3)].map((_, i) => <PropertyCardSkeleton key={i} />)
                     ) : propertiesToShow.length > 0 ? (
