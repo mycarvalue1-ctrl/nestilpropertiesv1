@@ -50,7 +50,7 @@ import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, setDoc } f
 import { useRouter } from 'next/navigation';
 import { Skeleton } from './ui/skeleton';
 import { CldUploadWidget, CldImage } from 'next-cloudinary';
-import { locationData, type Locality } from '@/lib/locations';
+import { locationData } from '@/lib/locations';
 
 const amenitiesList = [
   'Balcony', 'Borewell Water', 'Car Parking', 'CCTV', 'Electricity', 'Gated Community', 
@@ -162,7 +162,6 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [localities, setLocalities] = useState<Locality[]>([]);
 
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -351,21 +350,14 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
 
   useEffect(() => {
     if (watchedCity) {
-      const selectedDistrict = locationData[0].districts.find(d => d.name === watchedCity);
-      if (selectedDistrict) {
-        setLocalities(selectedDistrict.localities);
-        const currentLocality = form.getValues('locality');
-        if (currentLocality && !selectedDistrict.localities.some(l => l.name === currentLocality)) {
-             form.setValue('locality', '', { shouldValidate: true });
-        }
-      } else {
-        setLocalities([]);
-        form.setValue('locality', '', { shouldValidate: true });
+      // When city changes, reset locality.
+      const previousCity = form.getValues('city');
+      if (previousCity !== watchedCity) {
+        form.setValue('locality', '');
       }
-    } else {
-      setLocalities([]);
     }
   }, [watchedCity, form]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore || !user) {
@@ -535,16 +527,7 @@ export function PostPropertyFormComponent({ editId }: { editId: string | null })
                 <FormField control={form.control} name="locality" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Area / Locality</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!watchedCity || localities.length === 0}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Select an area / locality" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                {localities.map(locality => (
-                                    <SelectItem key={locality.name} value={locality.name}>
-                                        {locality.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <FormControl><Input placeholder="e.g., Benz Circle, Patamata" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
