@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -32,18 +31,8 @@ export function Header() {
         <div className="flex items-center gap-2 md:gap-6">
             <NavLogo />
             <LocationSelector className="md:hidden" />
-            <nav className="hidden md:flex items-center gap-1.5">
-                {navLinks.map(link => (
-                    <Link key={link.href} href={link.href} className={cn(
-                        "px-3.5 py-[7px] rounded-lg text-sm font-medium text-slate-600 transition-colors",
-                        pathname === link.href ? "bg-slate-100 text-slate-900" : "hover:bg-slate-100 hover:text-slate-900"
-                    )}>
-                        {link.label}
-                    </Link>
-                ))}
-            </nav>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
             <LocationSelector className="hidden md:flex" />
             <Button asChild className="hidden md:inline-flex !font-bold text-[13px] bg-primary hover:bg-blue-700 hover:-translate-y-px shadow-lg shadow-blue-500/10">
                 <Link href="/post-property">+ List Property</Link>

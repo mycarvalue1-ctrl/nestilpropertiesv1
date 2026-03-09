@@ -135,7 +135,7 @@ export function LocationSelector({ className }: { className?: string }) {
         onClick={openModal}
       >
         <MapPin className="h-4 w-4 text-primary" />
-        <span className="truncate max-w-[150px]">
+        <span className="truncate max-w-[120px]">
           {savedLocation
             ? `${savedLocation.locality}, ${savedLocation.district}`
             : 'Select Location'}
