@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { MapPin, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { locationData as staticLocationData, type State, type District, type Locality } from '@/lib/locations';
+import { locationData as staticLocationData, type State, type District } from '@/lib/locations';
 
 type Location = {
   state: string;
@@ -41,7 +41,6 @@ export function LocationSelector({ className }: { className?: string }) {
   const [selectedLocality, setSelectedLocality] = useState<string>('');
 
   const [districts, setDistricts] = useState<District[]>([]);
-  const [localities, setLocalities] = useState<Locality[]>([]);
 
   const [savedLocation, setSavedLocation] = useState<Location | null>(null);
   const { toast } = useToast();
@@ -61,7 +60,6 @@ export function LocationSelector({ className }: { className?: string }) {
             const district = state.districts.find(d => d.name === parsedLocation.district);
             if (district) {
               setSelectedDistrict(district);
-              setLocalities(district.localities);
             }
           }
           setSelectedLocality(parsedLocation.locality || '');
@@ -94,7 +92,6 @@ export function LocationSelector({ className }: { className?: string }) {
       setSelectedState(state);
       setDistricts(state.districts);
       setSelectedDistrict(null);
-      setLocalities([]);
       setSelectedLocality('');
       setStep(2);
     }
@@ -104,7 +101,6 @@ export function LocationSelector({ className }: { className?: string }) {
     const district = districts.find((d) => d.name === districtName);
     if (district) {
       setSelectedDistrict(district);
-      setLocalities(district.localities || []);
       setSelectedLocality(''); // Reset locality on district change
       setStep(3);
     }
@@ -141,7 +137,6 @@ export function LocationSelector({ className }: { className?: string }) {
                 const district = state.districts.find(d => d.name === parsedLocation.district);
                 if (district) {
                     setSelectedDistrict(district);
-                    setLocalities(district.localities || []);
                     setStep(3);
                 } else {
                     setStep(2);
@@ -158,18 +153,18 @@ export function LocationSelector({ className }: { className?: string }) {
       <Button
         variant="ghost"
         className={cn(
-          "flex items-center gap-2 text-sm text-foreground/80 hover:text-foreground",
+          "flex items-center gap-1 text-sm text-foreground/80 hover:text-foreground",
           className
         )}
         onClick={openModal}
       >
         <MapPin className="h-4 w-4 text-primary" />
-        <span className="truncate max-w-[120px]">
+        <span className="truncate max-w-[100px]">
           {savedLocation
             ? `${savedLocation.locality}, ${savedLocation.district}`
             : 'Select Location'}
         </span>
-        <ChevronDown className="h-4 w-4" />
+        <ChevronDown className="h-4 w-4 opacity-50" />
       </Button>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -224,23 +219,15 @@ export function LocationSelector({ className }: { className?: string }) {
 
             {step >= 3 && (
               <div className="grid grid-cols-4 items-center gap-4">
-                <label className="text-right">Locality</label>
-                <Select
-                  onValueChange={setSelectedLocality}
-                  value={selectedLocality}
-                  disabled={!selectedDistrict || localities.length === 0}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a locality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(localities || []).map((locality) => (
-                      <SelectItem key={locality.name} value={locality.name}>
-                        {locality.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <label htmlFor="locality-input" className="text-right">Locality</label>
+                <Input
+                    id="locality-input"
+                    value={selectedLocality}
+                    onChange={(e) => setSelectedLocality(e.target.value)}
+                    className="col-span-3"
+                    placeholder="Enter locality"
+                    disabled={!selectedDistrict}
+                />
               </div>
             )}
           </div>
