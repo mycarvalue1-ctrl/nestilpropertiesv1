@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -45,32 +44,16 @@ export function LocationSelector({ className }: { className?: string }) {
   const [savedLocation, setSavedLocation] = useState<Location | null>(null);
   const { toast } = useToast();
   
-  const [isMounted, setIsMounted] = useState(false);
-
   useEffect(() => {
-    setIsMounted(true); 
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted) return;
-
+    // This effect runs only on the client, after the initial render.
     const handleLocationUpdate = () => {
       try {
         const locationJson = localStorage.getItem('userLocation');
         if (locationJson) {
           const parsedLocation = JSON.parse(locationJson);
           setSavedLocation(parsedLocation);
-          const state = locationData.find(s => s.name === parsedLocation.state);
-          if (state) {
-            setSelectedState(state);
-            setDistricts(state.districts);
-            const district = state.districts.find(d => d.name === parsedLocation.district);
-            if (district) {
-              setSelectedDistrict(district);
-            }
-          }
-          setSelectedLocality(parsedLocation.locality || '');
         } else {
+          // Set a default if nothing is in localStorage and save it.
           const defaultLocation = {
             state: 'Andhra Pradesh',
             district: 'NTR district',
@@ -84,14 +67,14 @@ export function LocationSelector({ className }: { className?: string }) {
       }
     };
 
-    handleLocationUpdate();
+    handleLocationUpdate(); // Run once on mount
 
-    window.addEventListener('location-changed', handleLocationUpdate);
+    window.addEventListener('location-changed', handleLocationUpdate); // Listen for external changes
 
     return () => {
       window.removeEventListener('location-changed', handleLocationUpdate);
     };
-  }, [isMounted, locationData]);
+  }, []); // Empty dependency array ensures this runs only once on the client after mount.
 
   const handleStateChange = (stateName: string) => {
     const state = locationData.find((s) => s.name === stateName);
@@ -121,8 +104,7 @@ export function LocationSelector({ className }: { className?: string }) {
         locality: selectedLocality,
       };
       localStorage.setItem('userLocation', JSON.stringify(newLocation));
-      window.dispatchEvent(new CustomEvent('location-changed'));
-      setSavedLocation(newLocation);
+      window.dispatchEvent(new CustomEvent('location-changed')); // This will trigger the useEffect listener to update state
       setIsModalOpen(false);
       toast({
         title: "Location Updated!",
@@ -132,25 +114,20 @@ export function LocationSelector({ className }: { className?: string }) {
   };
   
   const openModal = () => {
-      if (typeof window !== 'undefined') {
-        const locationJson = localStorage.getItem('userLocation');
-        if (locationJson) {
-          try {
-              const parsedLocation = JSON.parse(locationJson);
-              const state = locationData.find(s => s.name === parsedLocation.state);
-              if (state) {
-                  setSelectedState(state);
-                  setDistricts(state.districts);
-                  const district = state.districts.find(d => d.name === parsedLocation.district);
-                  if (district) {
-                      setSelectedDistrict(district);
-                      setStep(3);
-                  } else {
-                      setStep(2);
-                  }
-                  setSelectedLocality(parsedLocation.locality || '');
-              }
-          } catch {}
+      // Pre-fill the modal with the currently saved location
+      if (savedLocation) {
+        const state = locationData.find(s => s.name === savedLocation.state);
+        if (state) {
+            setSelectedState(state);
+            setDistricts(state.districts);
+            const district = state.districts.find(d => d.name === savedLocation.district);
+            if (district) {
+                setSelectedDistrict(district);
+                setStep(3);
+            } else {
+                setStep(2);
+            }
+            setSelectedLocality(savedLocation.locality || '');
         }
       }
       setIsModalOpen(true);
@@ -168,7 +145,7 @@ export function LocationSelector({ className }: { className?: string }) {
       >
         <MapPin className="h-4 w-4 text-primary" />
         <span className="truncate max-w-[100px] md:max-w-[150px]">
-          {isMounted && savedLocation
+          {savedLocation
             ? `${savedLocation.locality}, ${savedLocation.district}`
             : 'Select Location'}
         </span>
